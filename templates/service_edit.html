@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="{{ url_for('segment_view', house_id=house.id, segment_key='wykonczenie') }}" class="btn back-btn">{{ icon('arrow-left') }} wróć</a>
+<h1>edytuj usługę</h1>
+<form method="post">
+  <label>firma</label>
+  <input type="text" name="company" value="{{ service.company or '' }}" required>
+  <label>link</label>
+  <input type="text" name="link" value="{{ service.link or '' }}">
+  <label>opis</label>
+  <textarea name="description">{{ service.description or '' }}</textarea>
+  <label>tagi</label>
+  <div style="display:flex;flex-wrap:wrap;gap:10px;margin:6px 0 10px;">
+    {% for t in all_tags %}
+    <label style="display:flex;align-items:center;gap:5px;font-size:13px;width:auto;margin:0;">
+      <input type="checkbox" name="tags" value="{{ t }}" style="width:auto;" {% if t in service.tag_list %}checked{% endif %}>{{ t }}
+    </label>
+    {% endfor %}
+  </div>
+  {% set extra_tags = service.tag_list|reject('in', all_tags)|list %}
+  <label>inny tag (opcjonalnie)</label>
+  <input type="text" name="custom_tag" value="{{ extra_tags[0] if extra_tags else '' }}">
+  <button class="btn btn-primary btn-block" type="submit">zapisz zmiany</button>
+</form>
+<a class="btn btn-block" href="{{ url_for('service_delete_confirm', house_id=house.id, service_id=service.id) }}" style="margin-top:14px;color:var(--coral);border-color:var(--coral);">
+  {{ icon('trash') }} usuń usługę
+</a>
+{% endblock %}

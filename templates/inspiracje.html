@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="{{ url_for('dashboard', house_id=house.id) }}" class="btn back-btn">{{ icon('arrow-left') }} wróć</a>
+<h1>inspiracje do pokoi</h1>
+
+{% for cat in house.inspiration_categories %}
+<h2>{{ cat.name }} <span style="color:var(--text-muted);font-weight:400;font-size:13px;">· {{ cat.tiles|length }} kafelki</span></h2>
+<div class="masonry">
+  {% for t in cat.tiles %}
+  <div class="tile color-purple">
+    {% if t.photo_filename %}
+    <img src="{{ url_for('static', filename='uploads/' + t.photo_filename) }}" alt="{{ t.name }}">
+    {% else %}
+    <div class="tile-img">{{ icon('photo') }}</div>
+    {% endif %}
+    <div class="tile-body">
+      <strong>{{ t.name }}</strong>
+      {% if t.description %}<div style="color:var(--text-secondary);font-size:12px;">{{ t.description }}</div>{% endif %}
+      {% if t.link %}<a href="{{ t.link }}" target="_blank" style="font-size:12px;">link →</a>{% endif %}
+      <a href="{{ url_for('inspiracje_tile_delete_confirm', house_id=house.id, tile_id=t.id) }}" style="display:block;margin-top:4px;font-size:12px;color:var(--coral);">{{ icon('trash') }} usuń</a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+<details class="card">
+  <summary style="cursor:pointer;font-size:13px;color:var(--text-secondary);">+ dodaj kafelek</summary>
+  <form method="post" action="{{ url_for('inspiracje_tile_add', house_id=house.id, category_id=cat.id) }}" style="margin-top:8px;" enctype="multipart/form-data">
+    <label>nazwa</label>
+    <input type="text" name="name" required>
+    <label>zdjęcie</label>
+    <input type="file" name="photo" accept="image/*">
+    <label>opis</label>
+    <textarea name="description"></textarea>
+    <label>link</label>
+    <input type="text" name="link">
+    <button class="btn btn-primary btn-block" type="submit">dodaj</button>
+  </form>
+</details>
+{% endfor %}
+
+<details class="card">
+  <summary style="cursor:pointer;font-weight:600;font-size:14px;">+ dodaj własną kategorię</summary>
+  <form method="post" action="{{ url_for('inspiracje_category_new', house_id=house.id) }}" style="margin-top:10px;">
+    <input type="text" name="name" placeholder="np. taras" required>
+    <button class="btn btn-primary btn-block" type="submit">dodaj kategorię</button>
+  </form>
+</details>
+{% endblock %}

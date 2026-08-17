@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: domybudujesz
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FLASK_DEBUG
+        value: "0"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: domybudujesz-db
+          property: connectionString
+
+databases:
+  - name: domybudujesz-db
+    plan: free

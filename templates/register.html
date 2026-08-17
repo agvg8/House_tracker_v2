@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>załóż konto</h1>
+{% if error %}<div class="card color-coral">{{ error }}</div>{% endif %}
+<form method="post">
+  <label>e-mail</label>
+  <input type="text" name="email" required>
+  <label>hasło</label>
+  <input type="password" name="password" required minlength="8">
+  <p class="muted" style="margin:4px 0 0;font-size:12px;">min. 8 znaków, wielka i mała litera, cyfra</p>
+  <label>powtórz hasło</label>
+  <input type="password" name="password2" required minlength="8">
+  <button class="btn btn-primary btn-block" type="submit">załóż konto</button>
+</form>
+<a class="btn btn-block" href="{{ url_for('login') }}" style="margin-top:14px;">masz już konto? zaloguj się</a>
+{% endblock %}

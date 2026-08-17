@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="{{ url_for('item_detail', house_id=house.id, item_id=item.id) }}" class="btn back-btn">{{ icon('arrow-left') }} wróć</a>
+<h1>edytuj · {{ item.name }}</h1>
+
+<form method="post">
+  {% if item.template == 1 %}
+  {% set is_self = variant.labor_contractor == 'robię sam(a)' %}
+  <label>kto to wykona?</label>
+  <div class="type-picker">
+    <label class="type-card">
+      <input type="radio" name="labor_mode" value="self" {% if is_self or not variant.labor_contractor %}checked{% endif %}>
+      {{ icon('tool') }}
+      <span>robię sam(a)</span>
+    </label>
+    <label class="type-card">
+      <input type="radio" name="labor_mode" value="contractor" {% if not is_self and variant.labor_contractor %}checked{% endif %}>
+      {{ icon('users') }}
+      <span>zlecam fachowcowi</span>
+    </label>
+  </div>
+
+  <div class="box color-purple">
+    <h3>{{ icon('box') }} materiał</h3>
+    <label>nazwa / typ materiału</label>
+    <input type="text" name="material_name" value="{{ variant.material_name or '' }}">
+    <label>firma</label>
+    <input type="text" name="material_company" value="{{ variant.material_company or '' }}">
+    <label>wycena materiału (zł)</label>
+    <input type="number" name="material_price" step="0.01" value="{{ variant.material_price or 0 }}">
+  </div>
+
+  <div class="box color-teal" id="labor-box" style="{{ 'display:none;' if is_self else '' }}">
+    <h3>{{ icon('hammer') }} robocizna</h3>
+    <label>wykonawca</label>
+    <input type="text" name="labor_contractor" value="{{ '' if is_self else (variant.labor_contractor or '') }}">
+    <label class="checkbox-row"><input type="checkbox" name="labor_included" {% if variant.labor_included and not is_self %}checked{% endif %}> montaż wliczony w cenę materiału</label>
+    <label>wycena robocizny (zł)</label>
+    <input type="number" name="labor_price" step="0.01" value="{{ variant.labor_price or 0 }}">
+  </div>
+
+  <script>
+    (function(){
+      var box = document.getElementById('labor-box');
+      var radios = document.querySelectorAll('input[name="labor_mode"]');
+      function sync(){
+        var contractor = document.querySelector('input[name="labor_mode"]:checked').value === 'contractor';
+        box.style.display = contractor ? 'block' : 'none';
+      }
+      radios.forEach(function(r){ r.addEventListener('change', sync); });
+      sync();
+    })();
+  </script>
+
+  {% elif item.template == 2 %}
+  <div class="box color-amber">
+    <h3>{{ icon('calculator') }} szacowana wycena</h3>
+    <label>wykonawca / firma</label>
+    <input type="text" name="labor_contractor" value="{{ variant.labor_contractor or '' }}">
+    <label>szacowana wycena (zł)</label>
+    <input type="number" name="material_price" step="0.01" value="{{ variant.material_price or 0 }}">
+  </div>
+
+  {% else %}
+  <div class="box color-coral">
+    <h3>{{ icon('building-bank') }} urząd</h3>
+    <label>dokument</label>
+    <input type="text" name="material_name" value="{{ variant.material_name or '' }}">
+    <label>opłata (zł)</label>
+    <input type="number" name="material_price" step="0.01" value="{{ variant.material_price or 0 }}">
+  </div>
+  {% endif %}
+
+  <label>link (opcjonalnie)</label>
+  <input type="text" name="link" value="{{ variant.link or '' }}">
+  <label>notatka / informacje</label>
+  <textarea name="note">{{ variant.note or '' }}</textarea>
+
+  <button class="btn btn-primary btn-block" type="submit">zapisz zmiany</button>
+</form>
+{% endblock %}

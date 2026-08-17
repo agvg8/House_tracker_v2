@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="{{ url_for('segment_view', house_id=house.id, segment_key=item.segment_key) }}" class="btn back-btn">{{ icon('arrow-left') }} wróć</a>
+<h1>{{ item.name }}</h1>
+
+{% if saved %}
+<h2 style="font-size:14px;margin-top:1rem;">dodaj z zapisanych</h2>
+{% for s in saved %}
+<div class="saved-item">
+  <div>
+    <strong>{{ s.name }}</strong>{% if s.company %} · {{ s.company }}{% endif %}
+    <div style="color:var(--text-secondary)">{{ s.price_min|int }}{% if s.price_max %} – {{ s.price_max|int }}{% endif %} zł</div>
+  </div>
+  <form method="post" action="{{ url_for('item_variant_from_saved', house_id=house.id, item_id=item.id, saved_id=s.id) }}">
+    <button class="btn" type="submit">{{ icon('plus') }} dodaj</button>
+  </form>
+</div>
+{% endfor %}
+<p class="muted" style="margin-top:6px;">albo uzupełnij ręcznie:</p>
+{% endif %}
+
+<form method="post">
+
+  {% if item.template == 1 %}
+  <label>kto to wykona?</label>
+  <div class="type-picker" id="labor-mode-picker">
+    <label class="type-card">
+      <input type="radio" name="labor_mode" value="self" checked>
+      {{ icon('tool') }}
+      <span>robię sam(a)</span>
+    </label>
+    <label class="type-card">
+      <input type="radio" name="labor_mode" value="contractor">
+      {{ icon('users') }}
+      <span>zlecam fachowcowi</span>
+    </label>
+  </div>
+
+  <div class="box">
+    <h3>{{ icon('box') }} materiał</h3>
+    <label>nazwa / typ materiału</label>
+    <input type="text" name="material_name" placeholder="np. okno aluminiowe">
+    <label>firma</label>
+    <input type="text" name="material_company" placeholder="np. Drutex">
+    <label>wycena materiału (zł)</label>
+    <input type="number" name="material_price" step="0.01">
+  </div>
+
+  <div class="box" id="labor-box" style="display:none;">
+    <h3>{{ icon('hammer') }} robocizna</h3>
+    <label>wykonawca</label>
+    <input type="text" name="labor_contractor" placeholder="np. Ekipa Budex">
+    <label class="checkbox-row"><input type="checkbox" name="labor_included"> montaż wliczony w cenę materiału</label>
+    <label>wycena robocizny (zł)</label>
+    <input type="number" name="labor_price" step="0.01">
+  </div>
+
+  <script>
+    (function(){
+      var box = document.getElementById('labor-box');
+      var radios = document.querySelectorAll('input[name="labor_mode"]');
+      function sync(){
+        var contractor = document.querySelector('input[name="labor_mode"]:checked').value === 'contractor';
+        box.style.display = contractor ? 'block' : 'none';
+      }
+      radios.forEach(function(r){ r.addEventListener('change', sync); });
+      sync();
+    })();
+  </script>
+
+  <label>link (opcjonalnie)</label>
+  <input type="text" name="link">
+  <label>notatka (opcjonalnie)</label>
+  <textarea name="note"></textarea>
+
+  {% elif item.template == 2 %}
+  <div class="box">
+    <h3>{{ icon('calculator') }} szacowana wycena</h3>
+    <label>wykonawca / firma</label>
+    <input type="text" name="labor_contractor" placeholder="np. Wodpol">
+    <label>szacowana wycena (zł)</label>
+    <input type="number" name="material_price" step="0.01">
+    <label class="checkbox-row"><input type="checkbox" name="excluded"> nie wliczam w koszta (nie dotyczy mnie)</label>
+  </div>
+  <label>link (opcjonalnie)</label>
+  <input type="text" name="link">
+  <label>informacje</label>
+  <textarea name="note" placeholder="np. termin realizacji, wymagane dokumenty"></textarea>
+
+  {% else %}
+  <div class="box">
+    <h3>{{ icon('building-bank') }} urząd</h3>
+    <label>dokument</label>
+    <input type="text" name="material_name" placeholder="np. pozwolenie na budowę">
+    <label>opłata (zł)</label>
+    <input type="number" name="material_price" step="0.01">
+  </div>
+  <label>link (opcjonalnie)</label>
+  <input type="text" name="link">
+  <label>informacje</label>
+  <textarea name="note" placeholder="np. urząd, czas oczekiwania, wymagane załączniki"></textarea>
+  {% endif %}
+
+  <button class="btn btn-primary btn-block" type="submit">zapisz</button>
+</form>
+{% endblock %}

@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% from "_macros.html" import variants_section, materials_section, tasks_section %}
+{% block content %}
+<a href="{{ url_for('segment_view', house_id=house.id, segment_key=item.segment_key) }}" class="btn back-btn">{{ icon('arrow-left') }} wróć</a>
+<h1><span style="margin-right:8px;display:inline-block;">{{ icon(item.icon, size=24) }}</span>{{ item.name }}</h1>
+
+{% if item.is_room %}
+  <h2>{{ icon('users', size=18) }} wykonawcy</h2>
+  {% set quote_total = item.room_quotes|selectattr('include_in_budget')|sum(attribute='price') %}
+  <div class="total-badge">
+    <span>{{ icon('moneybag', size=16) }} razem wyceny (zaznaczone)</span>
+    <span>{{ quote_total|int }} zł</span>
+  </div>
+  {% for q in item.room_quotes %}
+  <div class="card {{ loop.cycle('color-pink','color-purple','color-teal','color-coral','color-amber','color-green') }}" style="{{ 'opacity:0.5;' if not q.include_in_budget else '' }}">
+    <div class="icon-actions">
+      <form method="post" action="{{ url_for('quote_toggle_include', house_id=house.id, quote_id=q.id) }}">
+        <button class="icon-btn {{ 'active' if q.include_in_budget else '' }}" type="submit" title="liczy się do budżetu">{{ icon('moneybag') }}</button>
+      </form>
+      <a class="icon-btn" href="{{ url_for('quote_delete_confirm', house_id=house.id, quote_id=q.id) }}" title="usuń">{{ icon('trash') }}</a>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div>
+        <strong>{{ q.service.company if q.service else 'wykonawca' }}</strong>
+        <span class="pill" style="margin-left:6px;">{{ q.tag }}</span>
+      </div>
+      <span style="font-weight:700;">{{ q.price|int }} zł</span>
+    </div>
+    {% if q.note %}<p style="margin:6px 0 0;color:var(--text-secondary);">{{ q.note }}</p>{% endif %}
+  </div>
+  {% else %}
+  <div class="dashed">brak jeszcze wycen dla tego pokoju</div>
+  {% endfor %}
+  <a class="btn btn-primary btn-block" href="{{ url_for('quote_new', house_id=house.id, item_id=item.id) }}">
+    {{ icon('plus') }} dodaj wycenę
+  </a>
+
+  <h2>{{ icon('list-check', size=18) }} zadania</h2>
+  {{ tasks_section(house, item) }}
+
+  <h2>{{ icon('box', size=18) }} produkty</h2>
+  {{ materials_section(house, item) }}
+
+{% elif item.will_change is not none %}
+  {% if not item.will_change %}
+  <div class="card color-teal">
+    <p style="margin:0 0 10px;">Ta instalacja <strong>nie będzie zmieniana</strong> - zostaje bez ingerencji.</p>
+    <form method="post" action="{{ url_for('item_toggle_will_change', house_id=house.id, item_id=item.id) }}">
+      <button class="btn btn-primary" type="submit">jednak będzie zmieniana</button>
+    </form>
+  </div>
+  {% else %}
+  <div class="card color-amber" style="display:flex;justify-content:space-between;align-items:center;">
+    <span>ta instalacja <strong>będzie zmieniana</strong></span>
+    <form method="post" action="{{ url_for('item_toggle_will_change', house_id=house.id, item_id=item.id) }}">
+      <button class="btn" type="submit">jednak zostaje bez zmian</button>
+    </form>
+  </div>
+
+  <h2>{{ icon('box', size=18) }} materiały</h2>
+  {{ materials_section(house, item) }}
+
+  <h2>{{ icon('users', size=18) }} usługi</h2>
+  {{ variants_section(house, item) }}
+  {% endif %}
+
+{% else %}
+  {% if item.excluded %}<div class="pill" style="margin-bottom:10px;">nie wliczam w koszta</div>{% endif %}
+  {{ variants_section(house, item) }}
+
+  {% if item.template == 2 %}
+  <form method="post" action="{{ url_for('item_toggle_excluded', house_id=house.id, item_id=item.id) }}" style="margin-top:10px;">
+    <button class="btn" type="submit">
+      {% if item.excluded %}cofnij "nie wliczam w koszta"{% else %}nie dotyczy mnie / nie wliczam w koszta{% endif %}
+    </button>
+  </form>
+  {% endif %}
+
+  {% if item.is_custom %}
+  <a href="{{ url_for('item_delete_confirm', house_id=house.id, item_id=item.id) }}" style="display:inline-block;margin-top:14px;font-size:13px;color:var(--coral);">
+    {{ icon('trash') }} usuń tę pozycję z sekcji
+  </a>
+  {% endif %}
+{% endif %}
+
+{% if insp_category %}
+<h2>{{ icon('photo', size=18) }} inspiracje{% if item.is_room %}{% else %} · {{ item.name }}{% endif %}</h2>
+<div class="masonry">
+  {% for t in insp_category.tiles %}
+  <div class="tile color-purple">
+    {% if t.photo_filename %}
+    <img src="{{ url_for('static', filename='uploads/' + t.photo_filename) }}" alt="{{ t.name }}">
+    {% else %}
+    <div class="tile-img">{{ icon('photo') }}</div>
+    {% endif %}
+    <div class="tile-body">
+      <strong>{{ t.name }}</strong>
+      {% if t.description %}<div style="color:var(--text-secondary);font-size:12px;">{{ t.description }}</div>{% endif %}
+      {% if t.link %}<a href="{{ t.link }}" target="_blank" style="font-size:12px;">link →</a>{% endif %}
+      <a href="{{ url_for('inspiracje_tile_delete_confirm', house_id=house.id, tile_id=t.id) }}" style="display:block;margin-top:4px;font-size:12px;color:var(--coral);">{{ icon('trash') }} usuń</a>
+    </div>
+  </div>
+  {% else %}
+  <div class="dashed">brak jeszcze inspiracji</div>
+  {% endfor %}
+</div>
+<details class="card">
+  <summary style="cursor:pointer;font-weight:600;font-size:14px;">+ dodaj inspirację</summary>
+  <form method="post" action="{{ url_for('inspiracje_tile_add', house_id=house.id, category_id=insp_category.id) }}" style="margin-top:10px;" enctype="multipart/form-data">
+    <input type="hidden" name="next" value="{{ url_for('item_detail', house_id=house.id, item_id=item.id) }}">
+    <label>nazwa</label>
+    <input type="text" name="name" required>
+    <label>zdjęcie</label>
+    <input type="file" name="photo" accept="image/*">
+    <label>opis</label>
+    <textarea name="description"></textarea>
+    <label>link</label>
+    <input type="text" name="link">
+    <button class="btn btn-primary btn-block" type="submit">dodaj</button>
+  </form>
+</details>
+{% endif %}
+{% endblock %}

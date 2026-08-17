@@ -1,0 +1,145 @@
+:root, [data-theme="light"]{
+  --pink:#D4537E; --pink-bg:#FBEAF0; --pink-dark:#72243E;
+  --purple:#7F77DD; --purple-bg:#EEEDFE; --purple-dark:#3C3489;
+  --teal:#1D9E75; --teal-bg:#E1F5EE; --teal-dark:#085041;
+  --coral:#D85A30; --coral-bg:#FAECE7; --coral-dark:#712B13;
+  --amber:#BA7517; --amber-bg:#FAEEDA; --amber-dark:#633806;
+  --green:#639922; --green-bg:#EAF3DE; --green-dark:#27500A;
+  --gray:#888780; --gray-bg:#F1EFE8; --gray-dark:#444441;
+  --text:#2C2C2A; --text-secondary:#5F5E5A; --text-muted:#888780;
+  --border:#E4E1D6; --border-strong:#D8D5C8; --surface:#FFFFFF; --page:#FDFBF7;
+  --track:#EDEAE0;
+  --radius:10px;
+}
+[data-theme="dark"]{
+  --pink:#F0A0C0; --pink-bg:#3A2430; --pink-dark:#F6C7DC;
+  --purple:#B3AEF2; --purple-bg:#2C2A47; --purple-dark:#D6D3FA;
+  --teal:#5BD1A8; --teal-bg:#153B31; --teal-dark:#9FE9CD;
+  --coral:#F0906A; --coral-bg:#3D2A20; --coral-dark:#F7BFA5;
+  --amber:#F0B85E; --amber-bg:#3B2C10; --amber-dark:#F8D399;
+  --green:#9BCB5C; --green-bg:#26330F; --green-dark:#C6E39C;
+  --gray:#B4B2A9; --gray-bg:#2A2A28; --gray-dark:#D3D1C7;
+  --text:#F1EFE8; --text-secondary:#B4B2A9; --text-muted:#84837D;
+  --border:#3A3937; --border-strong:#4A4946; --surface:#211F1D; --page:#171615;
+  --track:#33322F;
+  --radius:10px;
+}
+*{box-sizing:border-box;}
+body{margin:0;font-family:-apple-system,'Segoe UI',sans-serif;background:var(--page);color:var(--text);font-size:15px;transition:background .15s,color .15s;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 2rem;background:var(--surface);border-bottom:0.5px solid var(--border);}
+.brand{font-weight:600;text-decoration:none;color:var(--text);display:flex;align-items:center;gap:8px;font-size:16px;}
+.topbar nav{display:flex;align-items:center;}
+.topbar nav a{margin-left:20px;text-decoration:none;color:var(--text-secondary);font-size:14px;}
+.theme-btn{margin-left:20px;padding:7px 10px;}
+.wrap{max-width:760px;margin:0 auto;padding:2rem 1.5rem;}
+.back-link{font-size:13px;color:var(--text-secondary);text-decoration:none;}
+h1{font-size:23px;font-weight:600;margin:0 0 6px;}
+h2{font-size:18px;font-weight:600;margin:1.5rem 0 12px;}
+p.muted{color:var(--text-secondary);font-size:14px;margin:0 0 1.5rem;}
+.card{background:var(--surface);border:0.5px solid var(--border);border-radius:12px;padding:1.1rem 1.25rem;margin-bottom:12px;}
+.card-link{display:flex;align-items:center;justify-content:space-between;text-decoration:none;color:var(--text);cursor:pointer;}
+.dashed{border:1.5px dashed var(--border-strong);border-radius:12px;padding:1rem;text-align:center;color:var(--text-muted);}
+.hero{text-align:center;padding:2.5rem 1rem;background:linear-gradient(180deg,var(--pink-bg),var(--page));border-radius:16px;margin-bottom:1.5rem;}
+.btn{display:inline-flex;align-items:center;gap:6px;border:0.5px solid var(--border-strong);background:transparent;color:var(--text);padding:9px 16px;border-radius:var(--radius);font-size:14px;cursor:pointer;text-decoration:none;}
+.btn-primary{background:var(--pink);color:var(--page);border:none;font-weight:600;}
+.btn-block{display:flex;width:100%;justify-content:center;margin-top:14px;}
+form label{display:block;font-size:13px;color:var(--text-secondary);margin:12px 0 4px;}
+form input[type=text],form input[type=password],form input[type=number],form textarea,form select{
+  width:100%;padding:10px 12px;border:0.5px solid var(--border);border-radius:8px;font-size:15px;background:var(--surface);color:var(--text);
+}
+form textarea{min-height:70px;}
+.box{background:var(--gray-bg);border-radius:12px;padding:1rem;margin:12px 0;}
+.box h3{font-size:14px;font-weight:600;margin:0 0 6px;display:flex;align-items:center;gap:6px;}
+.checkbox-row{display:flex;align-items:center;gap:8px;font-size:13px;margin:10px 0;}
+.checkbox-row input{width:auto;}
+.dash-header{display:flex;align-items:center;gap:1.75rem;margin-bottom:1.75rem;flex-wrap:wrap;}
+.donut-svg{flex-shrink:0;}
+.info-blocks{display:flex;flex-direction:column;gap:10px;flex:1;min-width:220px;}
+.info-block{border-radius:12px;padding:0.9rem 1.2rem;display:flex;flex-direction:column;gap:2px;text-decoration:none;color:var(--text);border:none;}
+.info-label{font-size:12px;opacity:0.75;text-transform:lowercase;display:flex;align-items:center;gap:4px;}
+.info-value{font-size:17px;font-weight:700;}
+.segment-row{display:flex;align-items:center;justify-content:space-between;padding:0.9rem 1.1rem;border:0.5px solid var(--border);border-radius:12px;margin-bottom:10px;text-decoration:none;color:var(--text);}
+.seg-left{display:flex;align-items:center;gap:10px;}
+.icon-chip{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.pill{display:inline-block;padding:6px 12px;border-radius:20px;font-size:13px;background:var(--gray-bg);color:var(--text);margin:0 6px 6px 0;}
+.pill.active{background:var(--pink-bg);color:var(--pink-dark);font-weight:600;}
+.total-badge{background:var(--pink-bg);color:var(--pink-dark);border-radius:12px;padding:0.9rem 1.1rem;display:flex;justify-content:space-between;font-weight:600;margin:14px 0;}
+.grid-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:1.5rem;}
+.tile{border:0.5px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface);}
+.tile-img{height:70px;display:flex;align-items:center;justify-content:center;}
+.tile-body{padding:8px 10px;font-size:13px;}
+.missing-badge{background:var(--amber-bg);color:var(--amber-dark);border-radius:10px;padding:10px 14px;font-size:13px;margin-bottom:14px;}
+.saved-item{display:flex;justify-content:space-between;align-items:center;border:0.5px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:13px;}
+
+/* wybor typu projektu - karty zamiast checkboxow */
+.type-picker{display:flex;flex-direction:column;gap:8px;margin:8px 0 14px;}
+.type-card{display:flex;align-items:center;gap:10px;cursor:pointer;margin:0;padding:0.9rem 1.1rem;
+  border:1.5px solid var(--border);border-radius:12px;background:var(--surface);transition:border-color .12s,background .12s;}
+.type-card input{position:absolute;opacity:0;width:0;height:0;}
+.type-card i{font-size:20px;color:var(--text-muted);}
+.type-card.selected{border-color:var(--pink);background:var(--pink-bg);}
+.type-card.selected i{color:var(--pink-dark);}
+.type-card.selected span{font-weight:600;color:var(--pink-dark);}
+
+/* male kwadratowe przyciski akcji (edytuj/usun/budzet) w rogu karty */
+.icon-actions{display:flex;justify-content:flex-end;gap:6px;margin-bottom:8px;}
+.icon-actions form{display:inline;}
+.icon-btn{width:32px;height:32px;border-radius:8px;border:0.5px solid var(--border-strong);background:var(--surface);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-secondary);font-size:15px;}
+.icon-btn.active{background:var(--green-bg);color:var(--green-dark);border-color:var(--green);}
+.icon-btn.danger:hover{background:var(--coral-bg);color:var(--coral-dark);border-color:var(--coral);}
+
+/* modal grup */
+dialog.group-modal{border:none;border-radius:14px;padding:0;max-width:340px;width:90%;background:var(--surface);color:var(--text);}
+dialog.group-modal::backdrop{background:rgba(0,0,0,0.45);}
+.group-modal-inner{padding:1.25rem;}
+.group-option{display:block;width:100%;text-align:left;background:var(--gray-bg);border:none;border-radius:10px;padding:10px 12px;font-size:14px;margin-bottom:8px;cursor:pointer;color:var(--text);}
+.group-option.current{background:var(--pink-bg);color:var(--pink-dark);font-weight:600;}
+
+/* pinterest-style masonry dla inspiracji */
+.masonry{column-count:2;column-gap:10px;margin-bottom:1.25rem;}
+.masonry .tile{break-inside:avoid;margin-bottom:10px;width:100%;display:inline-block;}
+.masonry .tile img{width:100%;display:block;border-radius:12px 12px 0 0;}
+@media (min-width:600px){.masonry{column-count:3;}}
+
+.back-btn{margin-bottom:14px;font-weight:600;}
+
+/* kolorowe warianty kafelkow i kart */
+.color-pink{background:var(--pink-bg);border-color:var(--pink);border-left:4px solid var(--pink);}
+.color-purple{background:var(--purple-bg);border-color:var(--purple);border-left:4px solid var(--purple);}
+.color-teal{background:var(--teal-bg);border-color:var(--teal);border-left:4px solid var(--teal);}
+.color-coral{background:var(--coral-bg);border-color:var(--coral);border-left:4px solid var(--coral);}
+.color-amber{background:var(--amber-bg);border-color:var(--amber);border-left:4px solid var(--amber);}
+.color-green{background:var(--green-bg);border-color:var(--green);border-left:4px solid var(--green);}
+.box.color-purple{background:var(--purple-bg);}
+.box.color-teal{background:var(--teal-bg);}
+.box.color-amber{background:var(--amber-bg);}
+.box.color-coral{background:var(--coral-bg);}
+
+/* wieksze rozmiary wszedzie */
+body{font-size:16px;}
+h1{font-size:25px;}
+h2{font-size:19px;}
+p.muted{font-size:15px;}
+.card{padding:1.25rem 1.4rem;font-size:15px;}
+.segment-row{padding:1rem 1.3rem;}
+.segment-row span{font-size:15px !important;}
+.icon-chip{width:36px;height:36px;}
+.pill{font-size:14px;padding:7px 14px;}
+form input[type=text],form input[type=password],form input[type=number],form textarea,form select{font-size:16px;padding:11px 13px;}
+.btn{font-size:15px;padding:10px 18px;}
+
+@media (min-width: 900px){
+  body{font-size:17px;}
+  .wrap{max-width:960px;padding:3rem 2rem;}
+  h1{font-size:32px;}
+  h2{font-size:22px;}
+  p.muted{font-size:16px;}
+  .card{padding:1.6rem 1.8rem;font-size:16px;}
+  .segment-row{padding:1.25rem 1.5rem;}
+  .segment-row span{font-size:16px !important;}
+  .icon-chip{width:42px;height:42px;}
+  form input[type=text],form input[type=password],form input[type=number],form textarea,form select{font-size:17px;padding:13px 15px;}
+  .btn{font-size:16px;padding:12px 22px;}
+  .pill{font-size:15px;padding:8px 16px;}
+}

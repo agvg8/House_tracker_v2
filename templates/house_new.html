@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>nowy projekt</h1>
+<form method="post">
+  <label>co planujesz?</label>
+  <div class="type-picker">
+    {% for key, label, icon_name in project_types %}
+    <label class="type-card">
+      <input type="radio" name="project_type" value="{{ key }}" {% if key == 'dom' %}checked{% endif %}>
+      {{ icon(icon_name) }}
+      <span>{{ label }}</span>
+    </label>
+    {% endfor %}
+  </div>
+
+  <label>nazwa projektu</label>
+  <input type="text" name="name" placeholder="dom przy leśnej 12" required>
+  <label>link do projektu / oferty</label>
+  <input type="text" name="link" placeholder="https://...">
+  <label>metraż (m²)</label>
+  <input type="number" name="area_m2" step="0.1" placeholder="142">
+  <label>liczba pokoi</label>
+  <input type="number" name="rooms" placeholder="5">
+  <label>budżet całkowity (opcjonalnie)</label>
+  <input type="number" name="budget_total" step="0.01" placeholder="np. 600000">
+  <p class="muted" style="margin:4px 0 0;font-size:12px;">jeśli podasz budżet, wykres pokaże ile jeszcze zostało do wydania</p>
+
+  <button class="btn btn-primary btn-block" type="submit">utwórz projekt</button>
+</form>
+{% endblock %}

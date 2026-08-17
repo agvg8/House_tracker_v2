@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>robocze</h1>
+<p class="muted">prywatna baza materiałów i rozwiązań, które znalazłaś - jeszcze nie wliczona do budżetu żadnego domu</p>
+
+<form method="post" class="card">
+  <label>nazwa</label>
+  <input type="text" name="name" placeholder="np. styropian grafitowy" required>
+  <label>kategoria (segment budżetu)</label>
+  <select name="category">
+    <option value="">bez kategorii</option>
+    {% for key, name, icon_name in segments %}
+    <option value="{{ key }}">{{ name }}</option>
+    {% endfor %}
+  </select>
+  <label>firma</label>
+  <input type="text" name="company">
+  <label>cena od (zł)</label>
+  <input type="number" name="price_min" step="0.01">
+  <label>cena do (zł)</label>
+  <input type="number" name="price_max" step="0.01">
+  <label>link</label>
+  <input type="text" name="link">
+  <label>notatka</label>
+  <textarea name="note"></textarea>
+  <button class="btn btn-primary btn-block" type="submit">dodaj do roboczych</button>
+</form>
+
+<h2>zapisane ({{ items|length }})</h2>
+{% for s in items %}
+<div class="saved-item">
+  <div>
+    <strong>{{ s.name }}</strong>{% if s.company %} · {{ s.company }}{% endif %}
+    {% if s.category %}<div style="color:var(--text-muted);font-size:12px;">{{ s.category }}</div>{% endif %}
+  </div>
+  <span>{{ (s.price_min or 0)|int }}{% if s.price_max %} – {{ s.price_max|int }}{% endif %} zł</span>
+</div>
+{% else %}
+<div class="dashed">brak zapisanych pozycji</div>
+{% endfor %}
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="{{ url_for('item_detail', house_id=house.id, item_id=item.id) }}" class="btn back-btn"><i class="ti ti-arrow-left"></i> wróć</a>
+<h1>edytuj materiał</h1>
+<form method="post">
+  <label>nazwa</label>
+  <input type="text" name="name" value="{{ material.name or '' }}" required>
+  <label>sklep</label>
+  <input type="text" name="shop" value="{{ material.shop or '' }}">
+  <label>wycena (zł)</label>
+  <input type="number" name="price" step="0.01" value="{{ material.price or 0 }}">
+  <label>opis</label>
+  <textarea name="description">{{ material.description or '' }}</textarea>
+  <label>link</label>
+  <input type="text" name="link" value="{{ material.link or '' }}">
+  <button class="btn btn-primary btn-block" type="submit">zapisz zmiany</button>
+</form>
+{% endblock %}

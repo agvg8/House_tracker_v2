@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="{{ url_for('item_detail', house_id=house.id, item_id=item.id) }}" class="btn back-btn">{{ icon('arrow-left') }} wróć</a>
+<h1>dodaj wycenę · {{ item.name }}</h1>
+
+<div class="card color-green">
+  <h3 style="margin:0 0 8px;">{{ icon('tool') }} wykonamy to sami</h3>
+  <form method="post" action="{{ url_for('quote_diy', house_id=house.id, item_id=item.id) }}">
+    <label>informacje dodatkowe</label>
+    <textarea name="note" placeholder="np. materiały własne, robocizna weekendowa"></textarea>
+    <label>szacowany koszt materiałów (zł)</label>
+    <input type="number" name="price" step="0.01" required>
+    <button class="btn btn-primary btn-block" type="submit">{{ icon('plus') }} dodaj jako "sami"</button>
+  </form>
+</div>
+
+<p class="muted">albo wybierz kategorię usługi, potem wykonawcę z listy usług:</p>
+
+<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.25rem;">
+  {% for t in all_tags %}
+  <a href="{{ url_for('quote_new', house_id=house.id, item_id=item.id, tag=t) }}"
+     class="pill {{ 'active' if tag == t else '' }}">{{ t }}</a>
+  {% endfor %}
+</div>
+
+{% if tag %}
+  {% if services %}
+    {% for s in services %}
+    <div class="card {{ loop.cycle('color-pink','color-purple','color-teal','color-coral','color-amber','color-green') }}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+        <strong>{{ s.company or 'firma bez nazwy' }}</strong>
+        {% if s.link %}<a href="{{ s.link }}" target="_blank" style="font-size:13px;">link →</a>{% endif %}
+      </div>
+      {% if s.description %}<p style="margin:6px 0;color:var(--text-secondary);">{{ s.description }}</p>{% endif %}
+      <form method="post" action="{{ url_for('quote_create', house_id=house.id, item_id=item.id, service_id=s.id) }}" style="margin-top:8px;">
+        <input type="hidden" name="tag" value="{{ tag }}">
+        <label>informacje dodatkowe</label>
+        <textarea name="note" placeholder="np. parkiet dębowy, termin realizacji 2 tyg."></textarea>
+        <label>ile {{ s.company or 'wykonawca' }} podał (zł)</label>
+        <input type="number" name="price" step="0.01" required>
+        <button class="btn btn-primary btn-block" type="submit">{{ icon('plus') }} dodaj wycenę</button>
+      </form>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="dashed">brak usług otagowanych "{{ tag }}" - dodaj taką usługę w sekcji wykończenie</div>
+  {% endif %}
+{% else %}
+  <div class="dashed">wybierz tag powyżej</div>
+{% endif %}
+{% endblock %}

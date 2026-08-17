@@ -1,0 +1,159 @@
+{% macro variants_section(house, item) %}
+{% set opts = item.budget_options %}
+{% if opts and opts|length > 1 %}
+<div class="total-badge">
+  <span>{{ icon('calculator', size=16) }} widełki (min / max opcji)</span>
+  <span>{% if opts|min == opts|max %}{{ opts|min|int }} zł{% else %}{{ opts|min|int }} – {{ opts|max|int }} zł{% endif %}</span>
+</div>
+{% endif %}
+
+{% set existing_groups = item.variants|selectattr('group_name')|map(attribute='group_name')|unique|list %}
+
+{% for v in item.variants %}
+<div class="card {{ loop.cycle('color-pink','color-purple','color-teal','color-coral','color-amber','color-green') }}" style="{{ 'opacity:0.5;' if not v.include_in_budget else '' }}">
+  <div class="icon-actions">
+    <a class="icon-btn" href="{{ url_for('variant_edit', house_id=house.id, variant_id=v.id) }}" title="edytuj">{{ icon('tool') }}</a>
+    <a class="icon-btn" href="{{ url_for('variant_delete_confirm', house_id=house.id, variant_id=v.id) }}" title="usuń">{{ icon('trash') }}</a>
+    <form method="post" action="{{ url_for('variant_toggle_include', house_id=house.id, variant_id=v.id) }}">
+      <button class="icon-btn {{ 'active' if v.include_in_budget else '' }}" type="submit" title="liczy się do budżetu">{{ icon('moneybag') }}</button>
+    </form>
+  </div>
+
+  {% if item.template == 1 %}
+    <p><strong>materiał:</strong> {{ v.material_name or '—' }}{% if v.material_company %} · {{ v.material_company }}{% endif %} · {{ v.material_price|int }} zł</p>
+    <p><strong>robocizna:</strong> {% if v.labor_included %}wliczona w cenę materiału{% else %}{{ v.labor_contractor or '—' }} · {{ v.labor_price|int }} zł{% endif %}</p>
+  {% elif item.template == 2 %}
+    <p><strong>wykonawca:</strong> {{ v.labor_contractor or '—' }}</p>
+    <p><strong>szacowana wycena:</strong> {{ v.material_price|int }} zł</p>
+  {% else %}
+    <p><strong>dokument:</strong> {{ v.material_name or '—' }}</p>
+    <p><strong>opłata:</strong> {{ v.material_price|int }} zł</p>
+  {% endif %}
+  {% if v.link %}<p><a href="{{ v.link }}" target="_blank">otwórz link →</a></p>{% endif %}
+  {% if v.note %}<p style="color:var(--text-secondary);">{{ v.note }}</p>{% endif %}
+
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;flex-wrap:wrap;gap:8px;">
+    <p style="font-weight:700;font-size:17px;margin:0;">razem: {{ v.total|int }} zł</p>
+    {% if item.template != 3 %}
+    <div>
+      {% if v.group_name %}<span class="pill active">{{ icon('layers-union') }} {{ v.group_name }}</span>{% endif %}
+      <button class="btn" type="button" onclick="document.getElementById('group-modal-{{ v.id }}').showModal()">
+        {{ icon('layers-union') }} {% if v.group_name %}zmień grupę{% else %}dodaj do grupy{% endif %}
+      </button>
+    </div>
+    {% endif %}
+  </div>
+
+  {% if item.template != 3 %}
+  <dialog class="group-modal" id="group-modal-{{ v.id }}">
+    <div class="group-modal-inner">
+      <h2 style="margin-top:0;">grupa dla: {{ v.material_name or v.labor_contractor or 'ta opcja' }}</h2>
+      {% if existing_groups %}
+      <p class="muted" style="margin-bottom:8px;">istniejące grupy w tej pozycji:</p>
+      {% for g in existing_groups %}
+      <form method="post" action="{{ url_for('variant_set_group', house_id=house.id, variant_id=v.id) }}">
+        <input type="hidden" name="group_name" value="{{ g }}">
+        <button class="group-option {{ 'current' if v.group_name == g else '' }}" type="submit">{{ g }}</button>
+      </form>
+      {% endfor %}
+      {% endif %}
+      {% if v.group_name %}
+      <form method="post" action="{{ url_for('variant_set_group', house_id=house.id, variant_id=v.id) }}">
+        <input type="hidden" name="group_name" value="">
+        <button class="group-option" type="submit">{{ icon('x') }} usuń z grupy</button>
+      </form>
+      {% endif %}
+      <p class="muted" style="margin:12px 0 6px;">stwórz nową grupę:</p>
+      <form method="post" action="{{ url_for('variant_set_group', house_id=house.id, variant_id=v.id) }}" style="display:flex;gap:8px;">
+        <input type="text" name="group_name" placeholder="np. instalacja elektryczna DIY" style="flex:1;">
+        <button class="btn btn-primary" type="submit">stwórz</button>
+      </form>
+      <button class="btn btn-block" type="button" onclick="document.getElementById('group-modal-{{ v.id }}').close()" style="margin-top:10px;">zamknij</button>
+    </div>
+  </dialog>
+  {% endif %}
+</div>
+{% else %}
+<div class="dashed">brak jeszcze wyceny dla tej pozycji</div>
+{% endfor %}
+
+<div style="display:flex;gap:10px;flex-wrap:wrap;">
+  {% if not item.variants %}
+  <a class="btn btn-primary" style="flex:1;" href="{{ url_for('item_variant_add', house_id=house.id, item_id=item.id) }}">
+    {{ icon('pencil') }} uzupełnij wycenę
+  </a>
+  {% else %}
+  <a class="btn" style="flex:1;" href="{{ url_for('item_variant_add', house_id=house.id, item_id=item.id) }}">
+    {{ icon('plus') }} dodaj kolejną opcję
+  </a>
+  {% endif %}
+  {% if item.template != 3 %}
+  <form method="post" action="{{ url_for('item_variant_diy', house_id=house.id, item_id=item.id) }}" style="flex:1;">
+    <button class="btn btn-block" type="submit">{{ icon('tool') }} wykonamy to sami</button>
+  </form>
+  {% endif %}
+</div>
+{% endmacro %}
+
+
+{% macro materials_section(house, item) %}
+{% for m in item.materials %}
+<div class="card {{ loop.cycle('color-pink','color-purple','color-teal','color-coral','color-amber','color-green') }}" style="{{ 'opacity:0.5;' if not m.include_in_budget else '' }}">
+  <div class="icon-actions">
+    <a class="icon-btn" href="{{ url_for('material_edit', house_id=house.id, material_id=m.id) }}" title="edytuj">{{ icon('tool') }}</a>
+    <a class="icon-btn" href="{{ url_for('material_delete_confirm', house_id=house.id, material_id=m.id) }}" title="usuń">{{ icon('trash') }}</a>
+    <form method="post" action="{{ url_for('material_toggle_include', house_id=house.id, material_id=m.id) }}">
+      <button class="icon-btn {{ 'active' if m.include_in_budget else '' }}" type="submit" title="liczy się do budżetu">{{ icon('moneybag') }}</button>
+    </form>
+  </div>
+  <p style="font-weight:600;margin:0 0 4px;">{{ m.name }}</p>
+  {% if m.shop %}<p style="margin:0 0 4px;color:var(--text-secondary);">sklep: {{ m.shop }}</p>{% endif %}
+  {% if m.description %}<p style="margin:0 0 4px;color:var(--text-secondary);">{{ m.description }}</p>{% endif %}
+  {% if m.link %}<p style="margin:0 0 6px;"><a href="{{ m.link }}" target="_blank">otwórz link →</a></p>{% endif %}
+  <p style="font-weight:700;font-size:16px;margin:0;">{{ m.price|int }} zł</p>
+</div>
+{% else %}
+<div class="dashed">brak jeszcze materiałów</div>
+{% endfor %}
+
+<details class="card">
+  <summary style="cursor:pointer;font-weight:600;font-size:14px;">+ dodaj materiał</summary>
+  <form method="post" action="{{ url_for('material_new', house_id=house.id, item_id=item.id) }}" style="margin-top:10px;">
+    <label>nazwa</label>
+    <input type="text" name="name" required>
+    <label>sklep</label>
+    <input type="text" name="shop">
+    <label>wycena (zł)</label>
+    <input type="number" name="price" step="0.01">
+    <label>opis</label>
+    <textarea name="description"></textarea>
+    <label>link</label>
+    <input type="text" name="link">
+    <button class="btn btn-primary btn-block" type="submit">dodaj materiał</button>
+  </form>
+</details>
+{% endmacro %}
+
+
+{% macro tasks_section(house, item) %}
+{% for t in item.tasks %}
+<div class="segment-row" style="padding-right:0.6rem;">
+  <form method="post" action="{{ url_for('task_toggle', house_id=house.id, task_id=t.id) }}" style="flex:1;">
+    <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin:0;width:auto;">
+      <input type="checkbox" onchange="this.form.submit()" {% if t.done %}checked{% endif %} style="width:auto;">
+      <span style="{{ 'text-decoration:line-through;color:var(--text-muted);' if t.done else '' }}">{{ t.text }}</span>
+    </label>
+  </form>
+  <form method="post" action="{{ url_for('task_delete', house_id=house.id, task_id=t.id) }}">
+    <button class="icon-btn" type="submit" title="usuń">{{ icon('trash') }}</button>
+  </form>
+</div>
+{% else %}
+<div class="dashed">brak jeszcze zadań</div>
+{% endfor %}
+
+<form method="post" action="{{ url_for('task_new', house_id=house.id, item_id=item.id) }}" style="display:flex;gap:8px;margin-top:10px;">
+  <input type="text" name="text" placeholder="np. wybrać kolor płytek" style="flex:1;" required>
+  <button class="btn btn-primary" type="submit">{{ icon('plus') }} dodaj</button>
+</form>
+{% endmacro %}

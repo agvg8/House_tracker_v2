@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>zaloguj się</h1>
+{% if error %}<div class="card color-coral">{{ error }}</div>{% endif %}
+<form method="post">
+  <label>e-mail</label>
+  <input type="text" name="email" required>
+  <label>hasło</label>
+  <input type="password" name="password" required>
+  <button class="btn btn-primary btn-block" type="submit">zaloguj</button>
+</form>
+<a class="btn btn-block" href="{{ url_for('register') }}" style="margin-top:14px;">nie masz konta? zarejestruj się</a>
+{% endblock %}

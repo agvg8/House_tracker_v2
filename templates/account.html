@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Twoje konto</h1>
+<p class="muted">{{ current_user.email }}</p>
+
+{% if error %}<div class="card color-coral">{{ error }}</div>{% endif %}
+{% if success %}<div class="card color-teal">{{ success }}</div>{% endif %}
+
+<div class="card color-purple">
+  <h2 style="margin-top:0;">zmień e-mail</h2>
+  <form method="post" action="{{ url_for('account_change_email') }}">
+    <label>nowy e-mail</label>
+    <input type="text" name="email" required>
+    <button class="btn btn-primary btn-block" type="submit">zmień e-mail</button>
+  </form>
+</div>
+
+<div class="card color-teal">
+  <h2 style="margin-top:0;">zmień hasło</h2>
+  <form method="post" action="{{ url_for('account_change_password') }}">
+    <label>aktualne hasło</label>
+    <input type="password" name="old_password" required>
+    <label>nowe hasło</label>
+    <input type="password" name="new_password" required minlength="8">
+    <p class="muted" style="margin:4px 0 0;font-size:12px;">min. 8 znaków, wielka i mała litera, cyfra</p>
+    <label>powtórz nowe hasło</label>
+    <input type="password" name="new_password2" required minlength="8">
+    <button class="btn btn-primary btn-block" type="submit">zmień hasło</button>
+  </form>
+</div>
+
+<div class="card color-coral">
+  <h2 style="margin-top:0;">usuń konto</h2>
+  <p style="color:var(--text-secondary);">To usunie Twoje konto oraz wszystkie Twoje projekty, wyceny i usługi. Nie da się tego cofnąć.</p>
+  <a class="btn btn-block" href="{{ url_for('account_delete_confirm') }}" style="color:var(--coral);border-color:var(--coral);font-weight:600;">
+    {{ icon('trash') }} usuń konto na stałe
+  </a>
+</div>
+{% endblock %}

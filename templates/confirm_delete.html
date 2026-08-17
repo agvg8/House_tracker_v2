@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>na pewno usunąć?</h1>
+<div class="card color-coral">
+  <p style="margin:0;">Zamierzasz usunąć: <strong>{{ target_name }}</strong>. Tej operacji nie da się cofnąć.</p>
+</div>
+<form method="post" action="{{ action_url }}">
+  <button class="btn btn-block" style="background:var(--coral);color:var(--page);font-weight:600;border:none;" type="submit">
+    {{ icon('trash') }} tak, usuń na stałe
+  </button>
+</form>
+<a class="btn btn-block" href="{{ cancel_url }}" style="margin-top:10px;">anuluj</a>
+{% endblock %}

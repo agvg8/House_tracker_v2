@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="hero">
+  <h1>zaplanuj budowę, mieszkanie albo remont</h1>
+  <p class="muted">jeden budżet, wszystkie decyzje w jednym miejscu</p>
+  <a href="{{ url_for('house_new') }}" class="btn btn-primary">+ dodaj projekt</a>
+</div>
+
+<h2>twoje projekty</h2>
+{% if houses %}
+  {% for h in houses %}
+  <a class="card card-link" href="{{ url_for('dashboard', house_id=h.id) }}">
+    <div class="seg-left">
+      <div style="display:flex;gap:4px;">
+        {% for t in h.type_list %}
+        <div class="icon-chip" style="background:var(--purple-bg);color:var(--purple-dark);" title="{{ type_names.get(t, t) }}">{{ icon(type_icons.get(t, 'home')) }}</div>
+        {% endfor %}
+      </div>
+      <div>
+        <div style="font-weight:600;">{{ h.name }}</div>
+        <div style="font-size:12px;color:var(--text-secondary)">{{ h.area_m2|int }} m² · {{ h.rooms }} pokoi</div>
+      </div>
+    </div>
+    {{ icon('chevron-right') }}
+  </a>
+  {% endfor %}
+{% else %}
+  <div class="dashed">brak projektów - dodaj pierwszy</div>
+{% endif %}
+{% endblock %}

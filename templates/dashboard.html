@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ house.name }}</h1>
+
+<div class="dash-header">
+  <svg width="220" height="220" viewBox="0 0 200 200" class="donut-svg">
+    <circle cx="100" cy="100" r="78" fill="none" stroke="var(--track)" stroke-width="30"></circle>
+    <g transform="rotate(-90 100 100)">
+      {% for s in slices %}
+        {% if s.url %}
+        <a href="{{ s.url }}">
+          <circle cx="100" cy="100" r="78" fill="none" stroke="{{ s.color }}" stroke-width="30"
+                  stroke-dasharray="{{ s.dasharray }}" stroke-dashoffset="{{ s.dashoffset }}" style="cursor:pointer;">
+            <title>{{ s.name }}: {{ s.lo|int }}{% if s.hi != s.lo %} – {{ s.hi|int }}{% endif %} zł</title>
+          </circle>
+        </a>
+        {% else %}
+        <circle cx="100" cy="100" r="78" fill="none" stroke="{{ s.color }}" stroke-width="30"
+                stroke-dasharray="{{ s.dasharray }}" stroke-dashoffset="{{ s.dashoffset }}">
+          <title>{{ s.name }}: {{ s.lo|int }} zł</title>
+        </circle>
+        {% endif %}
+      {% endfor %}
+    </g>
+    <text x="100" y="96" text-anchor="middle" font-size="17" font-weight="700" fill="var(--text)">{{ center_value }}</text>
+    <text x="100" y="115" text-anchor="middle" font-size="11" fill="var(--text-secondary)">{{ center_label }}</text>
+  </svg>
+
+  <div class="info-blocks">
+    <div class="info-block color-coral">
+      <span class="info-label">{{ icon('moneybag', size=14) }} zaplanowany koszt</span>
+      <span class="info-value">{{ (lo_total/1000)|round|int }}–{{ (hi_total/1000)|round|int }} tys zł</span>
+    </div>
+    {% if house.budget_total %}
+    <div class="info-block color-green">
+      <span class="info-label">{{ icon('chart-donut', size=14) }} budżet całkowity</span>
+      <span class="info-value">{{ (house.budget_total/1000)|round|int }} tys zł</span>
+    </div>
+    {% endif %}
+    <div class="info-block color-purple">
+      <span class="info-label">{{ icon('box', size=14) }} metraż i pokoje</span>
+      <span class="info-value">{{ house.area_m2|int }} m² · {{ house.rooms }} pokoi</span>
+    </div>
+    {% if house.link %}
+    <a class="info-block color-amber" href="{{ house.link }}" target="_blank">
+      <span class="info-label">{{ icon('chevron-right', size=14) }} link do projektu</span>
+      <span class="info-value">otwórz →</span>
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+<h2>budżet wg sekcji</h2>
+{% for b in breakdown %}
+{% set is_custom = b.key not in ["stan0","surowy_otwarty","surowy_zamkniety","instalacje","wykonczenie"] %}
+<div class="segment-row" style="{{ 'padding-right:0.6rem;' if is_custom else '' }}">
+  <a href="{{ url_for('segment_view', house_id=house.id, segment_key=b.key) }}" style="display:flex;align-items:center;justify-content:space-between;flex:1;text-decoration:none;color:inherit;">
+    <div class="seg-left">
+      <div class="icon-chip" style="background:{{ b.bg }};color:{{ b.fg }};">{{ icon(b.icon) }}</div>
+      <div>
+        <div style="font-weight:600;font-size:14px;">{{ b.name }}</div>
+        <div style="font-size:12px;color:var(--text-muted);">{{ b.item_count }} pozycji</div>
+      </div>
+    </div>
+    <span style="font-size:13px;color:var(--text-secondary)">
+      {% if b.hi > 0 %}{{ b.lo|int }} – {{ b.hi|int }} zł{% else %}brak wyceny{% endif %}
+    </span>
+  </a>
+  {% if is_custom %}
+  <a href="{{ url_for('segment_delete_confirm', house_id=house.id, segment_key=b.key) }}" style="color:var(--coral);margin-left:10px;" title="usuń sekcję">{{ icon('trash') }}</a>
+  {% endif %}
+</div>
+{% endfor %}
+
+<details class="card">
+  <summary style="cursor:pointer;font-weight:600;font-size:14px;">+ dodaj sekcję</summary>
+  <form method="post" action="{{ url_for('segment_new', house_id=house.id) }}" style="margin-top:10px;">
+    <input type="text" name="name" placeholder="np. taras, garaż" required>
+    <button class="btn btn-primary btn-block" type="submit">dodaj sekcję</button>
+  </form>
+</details>
+{% endblock %}

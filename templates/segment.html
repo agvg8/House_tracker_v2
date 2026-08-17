@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="{{ url_for('dashboard', house_id=house.id) }}" class="btn back-btn">{{ icon('arrow-left') }} wróć</a>
+<h1>{{ segment.name }}</h1>
+<p class="muted">{% if hi > 0 %}{{ lo|int }} – {{ hi|int }} zł{% else %}brak jeszcze wyceny{% endif %} · {{ items|length }} pozycji</p>
+
+{% if segment.key == "wykonczenie" %}
+<h2>usługi</h2>
+
+<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+  <a href="{{ url_for('segment_view', house_id=house.id, segment_key='wykonczenie') }}"
+     class="pill {{ 'active' if not active_tag else '' }}">wszystkie</a>
+  {% for t in all_tags %}
+  <a href="{{ url_for('segment_view', house_id=house.id, segment_key='wykonczenie', tag=t) }}"
+     class="pill {{ 'active' if active_tag == t else '' }}">{{ t }}</a>
+  {% endfor %}
+</div>
+
+{% for s in services %}
+<div class="card {{ loop.cycle('color-pink','color-purple','color-teal','color-coral','color-amber','color-green') }}">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+    <strong style="font-size:15px;">{{ s.company or 'firma bez nazwy' }}</strong>
+    {% if s.link %}<a href="{{ s.link }}" target="_blank" style="font-size:13px;">link →</a>{% endif %}
+  </div>
+  {% if s.description %}<p style="margin:6px 0;color:var(--text-secondary);">{{ s.description }}</p>{% endif %}
+  <div>{% for t in s.tag_list %}<span class="pill">{{ t }}</span>{% endfor %}</div>
+  <div style="display:flex;gap:8px;margin-top:8px;">
+    <a class="btn" href="{{ url_for('service_edit', house_id=house.id, service_id=s.id) }}">{{ icon('pencil') }} edytuj</a>
+    <a class="btn" href="{{ url_for('service_delete_confirm', house_id=house.id, service_id=s.id) }}" style="color:var(--coral);border-color:var(--coral);">{{ icon('trash') }} usuń</a>
+  </div>
+</div>
+{% else %}
+<div class="dashed">brak usług{% if active_tag %} z tagiem "{{ active_tag }}"{% endif %}</div>
+{% endfor %}
+
+<details class="card">
+  <summary style="cursor:pointer;font-weight:600;font-size:14px;">+ dodaj usługę</summary>
+  <form method="post" action="{{ url_for('service_new', house_id=house.id) }}" style="margin-top:10px;">
+    <label>firma</label>
+    <input type="text" name="company" placeholder="np. Malujemy Sp. z o.o." required>
+    <label>link</label>
+    <input type="text" name="link" placeholder="https://...">
+    <label>opis</label>
+    <textarea name="description" placeholder="np. polecony przez sąsiadów, dobre ceny"></textarea>
+    <label>tagi</label>
+    <div style="display:flex;flex-wrap:wrap;gap:10px;margin:6px 0 10px;">
+      {% for t in all_tags %}
+      <label style="display:flex;align-items:center;gap:5px;font-size:13px;width:auto;margin:0;">
+        <input type="checkbox" name="tags" value="{{ t }}" style="width:auto;">{{ t }}
+      </label>
+      {% endfor %}
+    </div>
+    <label>inny tag (opcjonalnie)</label>
+    <input type="text" name="custom_tag" placeholder="np. dekarz">
+    <button class="btn btn-primary btn-block" type="submit">dodaj usługę</button>
+  </form>
+</details>
+
+<h2>pokoje</h2>
+{% endif %}
+
+{% for it in items %}
+{% if it.is_room %}
+<div class="segment-row {{ loop.cycle('color-pink','color-purple','color-teal','color-coral','color-amber','color-green') }}" style="padding-right:0.6rem;">
+  <a href="{{ url_for('item_detail', house_id=house.id, item_id=it.id) }}" style="display:flex;align-items:center;justify-content:space-between;flex:1;text-decoration:none;color:inherit;">
+    <div class="seg-left">
+      <div class="icon-chip" style="background:var(--surface);">{{ icon(it.icon) }}</div>
+      <span style="font-weight:600;font-size:14px;">{{ it.name }}</span>
+    </div>
+    <span style="font-size:13px;color:var(--text-secondary);white-space:nowrap;">
+      {{ room_tile_counts.get(it.id, 0) }} insp. · {{ room_quote_sums.get(it.id, 0)|int }} zł
+    </span>
+  </a>
+</div>
+{% else %}
+{% set opts = it.budget_options %}
+<div class="segment-row {{ loop.cycle('color-pink','color-purple','color-teal','color-coral','color-amber','color-green') }}" style="padding-right:0.6rem;{{ 'opacity:0.55;' if it.excluded else '' }}">
+  <a href="{{ url_for('item_detail', house_id=house.id, item_id=it.id) if (it.variants or it.will_change is not none) else url_for('item_variant_add', house_id=house.id, item_id=it.id) }}" style="display:flex;align-items:center;justify-content:space-between;flex:1;text-decoration:none;color:inherit;">
+    <div class="seg-left">
+      <div class="icon-chip" style="background:var(--surface);">{{ icon(it.icon) }}</div>
+      <span style="font-weight:600;font-size:14px;">{{ it.name }}</span>
+      {% if it.excluded %}<span class="pill" style="margin-left:8px;">nie wliczam</span>{% endif %}
+      {% if it.will_change == False %}<span class="pill" style="margin-left:8px;">bez zmian</span>{% endif %}
+    </div>
+    <span style="font-size:13px;color:var(--text-secondary);white-space:nowrap;">
+      {% if opts %}
+        {% if opts|min == opts|max %}{{ opts|min|int }} zł{% else %}{{ opts|min|int }} – {{ opts|max|int }} zł{% endif %}
+      {% elif it.will_change == False %}bez zmian
+      {% else %}uzupełnij →{% endif %}
+    </span>
+  </a>
+  <a href="{{ url_for('item_delete_confirm', house_id=house.id, item_id=it.id) }}" style="color:var(--coral);margin-left:10px;" title="usuń pozycję">{{ icon('trash') }}</a>
+</div>
+{% endif %}
+{% endfor %}
+
+<details class="card">
+  <summary style="cursor:pointer;font-weight:600;font-size:14px;">+ dodaj więcej</summary>
+  <form method="post" action="{{ url_for('item_new', house_id=house.id, segment_key=segment.key) }}" style="margin-top:10px;">
+    <label>nazwa pozycji</label>
+    <input type="text" name="name" required>
+    <label>typ formularza</label>
+    <select name="template">
+      <option value="1">materiał + wykonawca</option>
+      <option value="2">szacowana wycena + wykonawca + informacje</option>
+      <option value="3">urząd: dokument + opłata + informacje</option>
+    </select>
+    <button class="btn btn-primary btn-block" type="submit">dalej</button>
+  </form>
+</details>
+{% endblock %}
