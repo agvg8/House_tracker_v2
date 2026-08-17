@@ -55,6 +55,24 @@ def icon(name, size=18, cls=""):
 app.jinja_env.globals["icon"] = icon
 
 
+def current_saved_products():
+    if not current_user.is_authenticated:
+        return []
+    return SavedProduct.query.filter_by(user_id=current_user.id).all()
+
+
+app.jinja_env.globals["current_saved_products"] = current_saved_products
+
+
+def current_saved_inspirations():
+    if not current_user.is_authenticated:
+        return []
+    return SavedInspiration.query.filter_by(user_id=current_user.id).all()
+
+
+app.jinja_env.globals["current_saved_inspirations"] = current_saved_inspirations
+
+
 DEFAULT_SEGMENTS = [
     ("stan0", "stan 0", "shovel"),
     ("surowy_otwarty", "stan surowy otwarty", "wall"),
@@ -181,7 +199,9 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(200), unique=True, nullable=False)
     password_hash = db.Column(db.String(300), nullable=False)
     houses = db.relationship("House", backref="owner", cascade="all, delete-orphan")
-    saved_solutions = db.relationship("SavedSolution", backref="owner", cascade="all, delete-orphan")
+    saved_products = db.relationship("SavedProduct", backref="owner", cascade="all, delete-orphan")
+    saved_services = db.relationship("SavedService", backref="owner", cascade="all, delete-orphan")
+    saved_inspirations = db.relationship("SavedInspiration", backref="owner", cascade="all, delete-orphan")
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -275,16 +295,39 @@ class Variant(db.Model):
         return (self.material_price or 0) + (self.labor_price or 0)
 
 
-class SavedSolution(db.Model):
+class SavedProduct(db.Model):
+    """Robocze - zapisany szablon produktu, do pozniejszego dodania do materialow/produktow w projekcie."""
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
-    category = db.Column(db.String(100))
     name = db.Column(db.String(200), nullable=False)
-    company = db.Column(db.String(200))
-    price_min = db.Column(db.Float)
-    price_max = db.Column(db.Float)
+    shop = db.Column(db.String(200))
+    price = db.Column(db.Float, default=0)
+    description = db.Column(db.Text)
     link = db.Column(db.String(400))
-    note = db.Column(db.Text)
+
+
+class SavedService(db.Model):
+    """Robocze - zapisany szablon uslugi/firmy, do pozniejszego dodania w sekcji uslugi wykonczenia."""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    company = db.Column(db.String(200), nullable=False)
+    tags = db.Column(db.String(400), default="")
+    link = db.Column(db.String(400))
+    description = db.Column(db.Text)
+
+    @property
+    def tag_list(self):
+        return [t for t in (self.tags or "").split(",") if t]
+
+
+class SavedInspiration(db.Model):
+    """Robocze - zapisana inspiracja, do pozniejszego dodania do konkretnego pokoju."""
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    link = db.Column(db.String(400))
+    photo_filename = db.Column(db.String(300))
 
 
 SERVICE_TAGS = ["tynki", "posadzki", "płyty G-K", "ocieplenia", "glazurnik", "parkiety", "panele",
@@ -541,9 +584,12 @@ def segment_view(house_id, segment_key):
             used_tags.update(s.tag_list)
         all_tags = SERVICE_TAGS + sorted(t for t in used_tags if t not in SERVICE_TAGS)
 
+    saved_services = SavedService.query.filter_by(user_id=current_user.id).all() if segment_key == "wykonczenie" else []
+
     return render_template("segment.html", house=house, segment=seg, items=items, lo=lo, hi=hi,
                             services=services, all_tags=all_tags, active_tag=active_tag,
-                            room_tile_counts=room_tile_counts, room_quote_sums=room_quote_sums)
+                            room_tile_counts=room_tile_counts, room_quote_sums=room_quote_sums,
+                            saved_services=saved_services)
 
 
 @app.route("/house/<int:house_id>/services/new", methods=["POST"])
@@ -560,6 +606,16 @@ def service_new(house_id):
         description=request.form.get("description"),
         tags=",".join(tags_selected),
     )
+    db.session.add(s)
+    db.session.commit()
+    return redirect(url_for("segment_view", house_id=house_id, segment_key="wykonczenie"))
+
+
+@app.route("/house/<int:house_id>/services/from-saved/<int:sid>", methods=["POST"])
+@login_required
+def service_from_saved(house_id, sid):
+    sv = SavedService.query.get_or_404(sid)
+    s = Service(house_id=house_id, company=sv.company, tags=sv.tags, link=sv.link, description=sv.description)
     db.session.add(s)
     db.session.commit()
     return redirect(url_for("segment_view", house_id=house_id, segment_key="wykonczenie"))
@@ -848,6 +904,17 @@ def material_new(house_id, item_id):
     return redirect(url_for("item_detail", house_id=house_id, item_id=item_id))
 
 
+@app.route("/house/<int:house_id>/item/<int:item_id>/material/from-saved/<int:pid>", methods=["POST"])
+@login_required
+def material_from_saved(house_id, item_id, pid):
+    p = SavedProduct.query.get_or_404(pid)
+    m = Material(item_id=item_id, name=p.name, shop=p.shop, price=p.price,
+                 description=p.description, link=p.link)
+    db.session.add(m)
+    db.session.commit()
+    return redirect(url_for("item_detail", house_id=house_id, item_id=item_id))
+
+
 @app.route("/house/<int:house_id>/material/<int:material_id>/edit", methods=["GET", "POST"])
 @login_required
 def material_edit(house_id, material_id):
@@ -966,10 +1033,7 @@ def item_variant_add(house_id, item_id):
         db.session.commit()
         return redirect(url_for("item_detail", house_id=house_id, item_id=item.id))
 
-    saved = SavedSolution.query.filter(
-        SavedSolution.user_id == current_user.id,
-        (SavedSolution.category == item.segment_key) | (SavedSolution.category == None)
-    ).all()
+    saved = SavedProduct.query.filter_by(user_id=current_user.id).all()
     return render_template("item_variant_add.html", house=house, item=item, saved=saved)
 
 
@@ -977,14 +1041,14 @@ def item_variant_add(house_id, item_id):
 @login_required
 def item_variant_from_saved(house_id, item_id, saved_id):
     item = Item.query.get_or_404(item_id)
-    s = SavedSolution.query.get_or_404(saved_id)
+    s = SavedProduct.query.get_or_404(saved_id)
     variant = Variant(
         item_id=item.id,
         material_name=s.name,
-        material_company=s.company,
-        material_price=s.price_min or 0,
+        material_company=s.shop,
+        material_price=s.price or 0,
         link=s.link,
-        note=s.note,
+        note=s.description,
         selected=True,
     )
     db.session.add(variant)
@@ -992,32 +1056,183 @@ def item_variant_from_saved(house_id, item_id, saved_id):
     return redirect(url_for("item_detail", house_id=house_id, item_id=item.id))
 
 
-@app.route("/robocze", methods=["GET", "POST"])
+@app.route("/robocze")
 @login_required
 def robocze():
+    products = SavedProduct.query.filter_by(user_id=current_user.id).all()
+    services = SavedService.query.filter_by(user_id=current_user.id).all()
+    inspirations = SavedInspiration.query.filter_by(user_id=current_user.id).all()
+    return render_template("robocze.html", products=products, services=services,
+                            inspirations=inspirations, all_tags=SERVICE_TAGS)
+
+
+@app.route("/robocze/product/new", methods=["POST"])
+@login_required
+def saved_product_new():
+    p = SavedProduct(
+        user_id=current_user.id, name=request.form["name"], shop=request.form.get("shop"),
+        price=float(request.form.get("price") or 0), description=request.form.get("description"),
+        link=request.form.get("link"),
+    )
+    db.session.add(p)
+    db.session.commit()
+    return redirect(url_for("robocze"))
+
+
+@app.route("/robocze/product/<int:pid>/edit", methods=["GET", "POST"])
+@login_required
+def saved_product_edit(pid):
+    p = SavedProduct.query.get_or_404(pid)
+    if p.user_id != current_user.id:
+        abort(404)
     if request.method == "POST":
-        s = SavedSolution(
-            user_id=current_user.id,
-            category=request.form.get("category") or None,
-            name=request.form["name"],
-            company=request.form.get("company"),
-            price_min=float(request.form.get("price_min") or 0),
-            price_max=float(request.form.get("price_max") or 0),
-            link=request.form.get("link"),
-            note=request.form.get("note"),
-        )
-        db.session.add(s)
+        p.name = request.form.get("name")
+        p.shop = request.form.get("shop")
+        p.price = float(request.form.get("price") or 0)
+        p.description = request.form.get("description")
+        p.link = request.form.get("link")
         db.session.commit()
         return redirect(url_for("robocze"))
-    items = SavedSolution.query.filter_by(user_id=current_user.id).all()
-    return render_template("robocze.html", items=items, segments=DEFAULT_SEGMENTS)
+    return render_template("saved_product_edit.html", product=p)
+
+
+@app.route("/robocze/product/<int:pid>/delete", methods=["GET"])
+@login_required
+def saved_product_delete_confirm(pid):
+    p = SavedProduct.query.get_or_404(pid)
+    if p.user_id != current_user.id:
+        abort(404)
+    return render_template("confirm_delete.html", target_name=p.name,
+                            action_url=url_for("saved_product_delete", pid=pid), cancel_url=url_for("robocze"))
+
+
+@app.route("/robocze/product/<int:pid>/delete", methods=["POST"])
+@login_required
+def saved_product_delete(pid):
+    p = SavedProduct.query.get_or_404(pid)
+    if p.user_id != current_user.id:
+        abort(404)
+    db.session.delete(p)
+    db.session.commit()
+    return redirect(url_for("robocze"))
+
+
+@app.route("/robocze/service/new", methods=["POST"])
+@login_required
+def saved_service_new():
+    tags_selected = request.form.getlist("tags")
+    custom_tag = (request.form.get("custom_tag") or "").strip()
+    if custom_tag:
+        tags_selected.append(custom_tag)
+    s = SavedService(
+        user_id=current_user.id, company=request.form["company"],
+        tags=",".join(tags_selected), link=request.form.get("link"),
+        description=request.form.get("description"),
+    )
+    db.session.add(s)
+    db.session.commit()
+    return redirect(url_for("robocze"))
+
+
+@app.route("/robocze/service/<int:sid>/edit", methods=["GET", "POST"])
+@login_required
+def saved_service_edit(sid):
+    s = SavedService.query.get_or_404(sid)
+    if s.user_id != current_user.id:
+        abort(404)
+    if request.method == "POST":
+        tags_selected = request.form.getlist("tags")
+        custom_tag = (request.form.get("custom_tag") or "").strip()
+        if custom_tag:
+            tags_selected.append(custom_tag)
+        s.company = request.form.get("company")
+        s.tags = ",".join(tags_selected)
+        s.link = request.form.get("link")
+        s.description = request.form.get("description")
+        db.session.commit()
+        return redirect(url_for("robocze"))
+    return render_template("saved_service_edit.html", service=s, all_tags=SERVICE_TAGS)
+
+
+@app.route("/robocze/service/<int:sid>/delete", methods=["GET"])
+@login_required
+def saved_service_delete_confirm(sid):
+    s = SavedService.query.get_or_404(sid)
+    if s.user_id != current_user.id:
+        abort(404)
+    return render_template("confirm_delete.html", target_name=s.company,
+                            action_url=url_for("saved_service_delete", sid=sid), cancel_url=url_for("robocze"))
+
+
+@app.route("/robocze/service/<int:sid>/delete", methods=["POST"])
+@login_required
+def saved_service_delete(sid):
+    s = SavedService.query.get_or_404(sid)
+    if s.user_id != current_user.id:
+        abort(404)
+    db.session.delete(s)
+    db.session.commit()
+    return redirect(url_for("robocze"))
+
+
+@app.route("/robocze/inspiracja/new", methods=["POST"])
+@login_required
+def saved_inspiration_new():
+    i = SavedInspiration(
+        user_id=current_user.id, name=request.form["name"],
+        description=request.form.get("description"), link=request.form.get("link"),
+        photo_filename=save_photo(request.files.get("photo")),
+    )
+    db.session.add(i)
+    db.session.commit()
+    return redirect(url_for("robocze"))
+
+
+@app.route("/robocze/inspiracja/<int:iid>/edit", methods=["GET", "POST"])
+@login_required
+def saved_inspiration_edit(iid):
+    i = SavedInspiration.query.get_or_404(iid)
+    if i.user_id != current_user.id:
+        abort(404)
+    if request.method == "POST":
+        i.name = request.form.get("name")
+        i.description = request.form.get("description")
+        i.link = request.form.get("link")
+        new_photo = save_photo(request.files.get("photo"))
+        if new_photo:
+            i.photo_filename = new_photo
+        db.session.commit()
+        return redirect(url_for("robocze"))
+    return render_template("saved_inspiration_edit.html", inspiration=i)
+
+
+@app.route("/robocze/inspiracja/<int:iid>/delete", methods=["GET"])
+@login_required
+def saved_inspiration_delete_confirm(iid):
+    i = SavedInspiration.query.get_or_404(iid)
+    if i.user_id != current_user.id:
+        abort(404)
+    return render_template("confirm_delete.html", target_name=i.name,
+                            action_url=url_for("saved_inspiration_delete", iid=iid), cancel_url=url_for("robocze"))
+
+
+@app.route("/robocze/inspiracja/<int:iid>/delete", methods=["POST"])
+@login_required
+def saved_inspiration_delete(iid):
+    i = SavedInspiration.query.get_or_404(iid)
+    if i.user_id != current_user.id:
+        abort(404)
+    db.session.delete(i)
+    db.session.commit()
+    return redirect(url_for("robocze"))
 
 
 @app.route("/house/<int:house_id>/inspiracje")
 @login_required
 def inspiracje(house_id):
     house = get_owned_house(house_id)
-    return render_template("inspiracje.html", house=house)
+    unassigned = SavedInspiration.query.filter_by(user_id=current_user.id).all()
+    return render_template("inspiracje.html", house=house, unassigned=unassigned)
 
 
 @app.route("/house/<int:house_id>/inspiracje/category/new", methods=["POST"])
@@ -1039,6 +1254,26 @@ def inspiracje_tile_add(house_id, category_id):
         description=request.form.get("description"),
         link=request.form.get("link"),
         photo_filename=save_photo(request.files.get("photo")),
+    )
+    db.session.add(tile)
+    db.session.commit()
+    next_url = request.form.get("next")
+    if next_url:
+        return redirect(next_url)
+    return redirect(url_for("inspiracje", house_id=house_id))
+
+
+@app.route("/house/<int:house_id>/inspiracje/from-saved/<int:iid>", methods=["POST"])
+@login_required
+def inspiracje_tile_from_saved(house_id, iid):
+    saved = SavedInspiration.query.get_or_404(iid)
+    category_id = int(request.form.get("category_id"))
+    cat = InspirationCategory.query.get_or_404(category_id)
+    if cat.house_id != house_id:
+        abort(404)
+    tile = InspirationTile(
+        category_id=category_id, name=saved.name, description=saved.description,
+        link=saved.link, photo_filename=saved.photo_filename,
     )
     db.session.add(tile)
     db.session.commit()

@@ -90,3 +90,30 @@ Cloudinary) - to nie jest jeszcze zrobione w tej wersji.
 - `DATABASE_URL` - opcjonalne; brak = SQLite lokalnie (nietrwałe na Render)
 - `PORT` - Render ustawia automatycznie, nie trzeba nic robić
 - `FLASK_DEBUG` - ustaw na `0` w produkcji (już w render.yaml)
+
+## Responsywność (ta tura)
+- Menu w prawym górnym rogu: na szerokich ekranach zwykłe linki w poziomie,
+  poniżej ~720px zwija się do przycisku hamburgera - otwiera wysuwany panel
+  z prawej strony z przyciemnionym tłem (kliknięcie w tło albo w link zamyka).
+- Przełącznik jasny/ciemny motyw jest zawsze widoczny, niezależnie od stanu menu.
+- Karty z przyciskami akcji (edytuj/usuń/liczy się do budżetu) - te 3 kwadratowe
+  ikonki są teraz w prawym górnym rogu KARTY, w tym samym wierszu co pierwsza
+  linia tekstu (nie jako osobny rząd nad treścią). Na wąskich ekranach ikonki
+  i zarezerwowany margines się zmniejszają.
+
+## Przebudowa "robocze" (ta tura)
+- Robocze to teraz 3 równorzędne biblioteki: usługi, produkty, inspiracje -
+  każda w osobnym modelu (SavedService, SavedProduct, SavedInspiration),
+  per konto (nie per projekt).
+- Strona /robocze: 3 kafelki "dodaj X" otwierające okienko modalne, poniżej
+  siatka 3 kolumn (responsywna - 2 kolumny <720px, 1 kolumna <480px) z tym,
+  co już dodane - każdy kafelek edytowalny i usuwalny.
+- "Dodaj z roboczych" wpięte w: dodawanie usługi w wykończeniu, dodawanie
+  materiału/produktu (instalacje-materiały i pokoje-produkty), dodawanie
+  wariantu materiał+wykonawca (dawne "dodaj z zapisanych"), dodawanie
+  inspiracji do pokoju.
+- Główna strona inspiracji ma teraz na górze sekcję "z roboczych" - pokazuje
+  niewykorzystane jeszcze inspiracje z biblioteki, z selectem pokoju i
+  przyciskiem "+" żeby przypisać bez otwierania konkretnego pokoju.
+- Stary model SavedSolution (jedna wspólna "biblioteka materiałów") został
+  zastąpiony przez SavedProduct - wymaga usunięcia bazy.

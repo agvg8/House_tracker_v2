@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="{{ url_for('robocze') }}" class="btn back-btn">{{ icon('arrow-left') }} wróć</a>
+<h1>edytuj inspirację</h1>
+{% if inspiration.photo_filename %}
+<img src="{{ url_for('static', filename='uploads/' + inspiration.photo_filename) }}" style="width:100%;border-radius:12px;margin-bottom:1rem;">
+{% endif %}
+<form method="post" enctype="multipart/form-data">
+  <label>nazwa</label>
+  <input type="text" name="name" value="{{ inspiration.name or '' }}" required>
+  <label>nowe zdjęcie (opcjonalnie, zastąpi obecne)</label>
+  <input type="file" name="photo" accept="image/*">
+  <label>opis</label>
+  <textarea name="description">{{ inspiration.description or '' }}</textarea>
+  <label>link</label>
+  <input type="text" name="link" value="{{ inspiration.link or '' }}">
+  <button class="btn btn-primary btn-block" type="submit">zapisz zmiany</button>
+</form>
+{% endblock %}

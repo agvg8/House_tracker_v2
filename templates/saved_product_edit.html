@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="{{ url_for('robocze') }}" class="btn back-btn">{{ icon('arrow-left') }} wróć</a>
+<h1>edytuj produkt</h1>
+<form method="post">
+  <label>nazwa</label>
+  <input type="text" name="name" value="{{ product.name or '' }}" required>
+  <label>sklep</label>
+  <input type="text" name="shop" value="{{ product.shop or '' }}">
+  <label>wycena (zł)</label>
+  <input type="number" name="price" step="0.01" value="{{ product.price or 0 }}">
+  <label>opis</label>
+  <textarea name="description">{{ product.description or '' }}</textarea>
+  <label>link</label>
+  <input type="text" name="link" value="{{ product.link or '' }}">
+  <button class="btn btn-primary btn-block" type="submit">zapisz zmiany</button>
+</form>
+{% endblock %}

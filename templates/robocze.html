@@ -1,41 +1,144 @@
 {% extends "base.html" %}
 {% block content %}
 <h1>robocze</h1>
-<p class="muted">prywatna baza materiałów i rozwiązań, które znalazłaś - jeszcze nie wliczona do budżetu żadnego domu</p>
+<p class="muted">prywatna biblioteka usług, produktów i inspiracji - dodajesz tu raz, potem wykorzystujesz w dowolnym projekcie przyciskiem "dodaj z roboczych"</p>
 
-<form method="post" class="card">
-  <label>nazwa</label>
-  <input type="text" name="name" placeholder="np. styropian grafitowy" required>
-  <label>kategoria (segment budżetu)</label>
-  <select name="category">
-    <option value="">bez kategorii</option>
-    {% for key, name, icon_name in segments %}
-    <option value="{{ key }}">{{ name }}</option>
-    {% endfor %}
-  </select>
-  <label>firma</label>
-  <input type="text" name="company">
-  <label>cena od (zł)</label>
-  <input type="number" name="price_min" step="0.01">
-  <label>cena do (zł)</label>
-  <input type="number" name="price_max" step="0.01">
-  <label>link</label>
-  <input type="text" name="link">
-  <label>notatka</label>
-  <textarea name="note"></textarea>
-  <button class="btn btn-primary btn-block" type="submit">dodaj do roboczych</button>
-</form>
-
-<h2>zapisane ({{ items|length }})</h2>
-{% for s in items %}
-<div class="saved-item">
-  <div>
-    <strong>{{ s.name }}</strong>{% if s.company %} · {{ s.company }}{% endif %}
-    {% if s.category %}<div style="color:var(--text-muted);font-size:12px;">{{ s.category }}</div>{% endif %}
-  </div>
-  <span>{{ (s.price_min or 0)|int }}{% if s.price_max %} – {{ s.price_max|int }}{% endif %} zł</span>
+<div class="grid-tiles" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
+  <button class="card color-teal" type="button" onclick="document.getElementById('add-service-modal').showModal()" style="cursor:pointer;text-align:center;border:1.5px dashed var(--teal);">
+    {{ icon('users', size=26) }}<p style="font-weight:600;margin:8px 0 0;">dodaj usługę</p>
+  </button>
+  <button class="card color-purple" type="button" onclick="document.getElementById('add-product-modal').showModal()" style="cursor:pointer;text-align:center;border:1.5px dashed var(--purple);">
+    {{ icon('box', size=26) }}<p style="font-weight:600;margin:8px 0 0;">dodaj produkt</p>
+  </button>
+  <button class="card color-amber" type="button" onclick="document.getElementById('add-inspiracja-modal').showModal()" style="cursor:pointer;text-align:center;border:1.5px dashed var(--amber);">
+    {{ icon('photo', size=26) }}<p style="font-weight:600;margin:8px 0 0;">dodaj inspirację</p>
+  </button>
 </div>
-{% else %}
-<div class="dashed">brak zapisanych pozycji</div>
-{% endfor %}
+
+{% if services %}
+<h2>{{ icon('users', size=18) }} usługi</h2>
+<div class="grid-3">
+  {% for s in services %}
+  <div class="card color-teal">
+    <div class="icon-actions">
+      <a class="icon-btn" href="{{ url_for('saved_service_edit', sid=s.id) }}" title="edytuj">{{ icon('tool') }}</a>
+      <a class="icon-btn" href="{{ url_for('saved_service_delete_confirm', sid=s.id) }}" title="usuń">{{ icon('trash') }}</a>
+    </div>
+    <strong>{{ s.company }}</strong>
+    {% if s.description %}<p style="margin:6px 0;color:var(--text-secondary);font-size:13px;">{{ s.description }}</p>{% endif %}
+    {% if s.link %}<a href="{{ s.link }}" target="_blank" style="font-size:12px;">link →</a>{% endif %}
+    <div>{% for t in s.tag_list %}<span class="pill">{{ t }}</span>{% endfor %}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if products %}
+<h2>{{ icon('box', size=18) }} produkty</h2>
+<div class="grid-3">
+  {% for p in products %}
+  <div class="card color-purple">
+    <div class="icon-actions">
+      <a class="icon-btn" href="{{ url_for('saved_product_edit', pid=p.id) }}" title="edytuj">{{ icon('tool') }}</a>
+      <a class="icon-btn" href="{{ url_for('saved_product_delete_confirm', pid=p.id) }}" title="usuń">{{ icon('trash') }}</a>
+    </div>
+    <strong>{{ p.name }}</strong>
+    {% if p.shop %}<p style="margin:4px 0;color:var(--text-secondary);font-size:13px;">sklep: {{ p.shop }}</p>{% endif %}
+    {% if p.link %}<a href="{{ p.link }}" target="_blank" style="font-size:12px;">link →</a>{% endif %}
+    <p style="font-weight:700;margin:6px 0 0;">{{ p.price|int }} zł</p>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if inspirations %}
+<h2>{{ icon('photo', size=18) }} inspiracje</h2>
+<div class="masonry">
+  {% for i in inspirations %}
+  <div class="tile color-amber">
+    {% if i.photo_filename %}
+    <img src="{{ url_for('static', filename='uploads/' + i.photo_filename) }}" alt="{{ i.name }}">
+    {% else %}
+    <div class="tile-img">{{ icon('photo') }}</div>
+    {% endif %}
+    <div class="tile-body">
+      <strong>{{ i.name }}</strong>
+      {% if i.description %}<div style="color:var(--text-secondary);font-size:12px;">{{ i.description }}</div>{% endif %}
+      <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+        <a href="{{ url_for('saved_inspiration_edit', iid=i.id) }}" class="tile-btn">{{ icon('tool', size=13) }} edytuj</a>
+        <a href="{{ url_for('saved_inspiration_delete_confirm', iid=i.id) }}" class="tile-btn danger">{{ icon('trash', size=13) }} usuń</a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% if not services and not products and not inspirations %}
+<div class="dashed">brak jeszcze niczego w robocze - zacznij od kafelka powyżej</div>
+{% endif %}
+
+<dialog class="group-modal" id="add-service-modal">
+  <div class="group-modal-inner">
+    <h2 style="margin-top:0;">dodaj usługę</h2>
+    <form method="post" action="{{ url_for('saved_service_new') }}">
+      <label>firma</label>
+      <input type="text" name="company" required>
+      <label>link</label>
+      <input type="text" name="link">
+      <label>opis</label>
+      <textarea name="description"></textarea>
+      <label>tagi</label>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;margin:6px 0 10px;">
+        {% for t in all_tags %}
+        <label style="display:flex;align-items:center;gap:5px;font-size:13px;width:auto;margin:0;">
+          <input type="checkbox" name="tags" value="{{ t }}" style="width:auto;">{{ t }}
+        </label>
+        {% endfor %}
+      </div>
+      <label>inny tag</label>
+      <input type="text" name="custom_tag">
+      <button class="btn btn-primary btn-block" type="submit">dodaj</button>
+    </form>
+    <button class="btn btn-block" type="button" onclick="document.getElementById('add-service-modal').close()" style="margin-top:10px;">zamknij</button>
+  </div>
+</dialog>
+
+<dialog class="group-modal" id="add-product-modal">
+  <div class="group-modal-inner">
+    <h2 style="margin-top:0;">dodaj produkt</h2>
+    <form method="post" action="{{ url_for('saved_product_new') }}">
+      <label>nazwa</label>
+      <input type="text" name="name" required>
+      <label>sklep</label>
+      <input type="text" name="shop">
+      <label>wycena (zł)</label>
+      <input type="number" name="price" step="0.01">
+      <label>opis</label>
+      <textarea name="description"></textarea>
+      <label>link</label>
+      <input type="text" name="link">
+      <button class="btn btn-primary btn-block" type="submit">dodaj</button>
+    </form>
+    <button class="btn btn-block" type="button" onclick="document.getElementById('add-product-modal').close()" style="margin-top:10px;">zamknij</button>
+  </div>
+</dialog>
+
+<dialog class="group-modal" id="add-inspiracja-modal">
+  <div class="group-modal-inner">
+    <h2 style="margin-top:0;">dodaj inspirację</h2>
+    <form method="post" action="{{ url_for('saved_inspiration_new') }}" enctype="multipart/form-data">
+      <label>nazwa</label>
+      <input type="text" name="name" required>
+      <label>zdjęcie</label>
+      <input type="file" name="photo" accept="image/*">
+      <label>opis</label>
+      <textarea name="description"></textarea>
+      <label>link</label>
+      <input type="text" name="link">
+      <button class="btn btn-primary btn-block" type="submit">dodaj</button>
+    </form>
+    <button class="btn btn-block" type="button" onclick="document.getElementById('add-inspiracja-modal').close()" style="margin-top:10px;">zamknij</button>
+  </div>
+</dialog>
 {% endblock %}

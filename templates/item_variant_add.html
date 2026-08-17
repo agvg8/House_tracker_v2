@@ -8,8 +8,8 @@
 {% for s in saved %}
 <div class="saved-item">
   <div>
-    <strong>{{ s.name }}</strong>{% if s.company %} · {{ s.company }}{% endif %}
-    <div style="color:var(--text-secondary)">{{ s.price_min|int }}{% if s.price_max %} – {{ s.price_max|int }}{% endif %} zł</div>
+    <strong>{{ s.name }}</strong>{% if s.shop %} · {{ s.shop }}{% endif %}
+    <div style="color:var(--text-secondary)">{{ s.price|int }} zł</div>
   </div>
   <form method="post" action="{{ url_for('item_variant_from_saved', house_id=house.id, item_id=item.id, saved_id=s.id) }}">
     <button class="btn" type="submit">{{ icon('plus') }} dodaj</button>

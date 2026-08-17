@@ -87,11 +87,6 @@
     {{ icon('plus') }} dodaj kolejną opcję
   </a>
   {% endif %}
-  {% if item.template != 3 %}
-  <form method="post" action="{{ url_for('item_variant_diy', house_id=house.id, item_id=item.id) }}" style="flex:1;">
-    <button class="btn btn-block" type="submit">{{ icon('tool') }} wykonamy to sami</button>
-  </form>
-  {% endif %}
 </div>
 {% endmacro %}
 
@@ -118,6 +113,24 @@
 
 <details class="card">
   <summary style="cursor:pointer;font-weight:600;font-size:14px;">+ dodaj materiał</summary>
+
+  {% set saved_products = current_saved_products() %}
+  {% if saved_products %}
+  <p class="muted" style="margin:10px 0 6px;">dodaj z roboczych:</p>
+  {% for sp in saved_products %}
+  <div class="saved-item">
+    <div>
+      <strong>{{ sp.name }}</strong>{% if sp.shop %} · {{ sp.shop }}{% endif %}
+      <div style="color:var(--text-secondary)">{{ sp.price|int }} zł</div>
+    </div>
+    <form method="post" action="{{ url_for('material_from_saved', house_id=house.id, item_id=item.id, pid=sp.id) }}">
+      <button class="btn" type="submit">{{ icon('plus') }} dodaj</button>
+    </form>
+  </div>
+  {% endfor %}
+  <p class="muted" style="margin:12px 0 6px;">albo dodaj nowy:</p>
+  {% endif %}
+
   <form method="post" action="{{ url_for('material_new', house_id=house.id, item_id=item.id) }}" style="margin-top:10px;">
     <label>nazwa</label>
     <input type="text" name="name" required>

@@ -3,6 +3,34 @@
 <a href="{{ url_for('dashboard', house_id=house.id) }}" class="btn back-btn">{{ icon('arrow-left') }} wróć</a>
 <h1>inspiracje do pokoi</h1>
 
+{% if unassigned %}
+<h2>{{ icon('box', size=18) }} z roboczych</h2>
+<p class="muted">nie musisz od razu przypisywać do pokoju - poniższe są w Twojej bibliotece roboczej, kliknij "+" żeby dodać do konkretnego pokoju</p>
+<div class="masonry">
+  {% for si in unassigned %}
+  <div class="tile color-amber">
+    {% if si.photo_filename %}
+    <img src="{{ url_for('static', filename='uploads/' + si.photo_filename) }}" alt="{{ si.name }}">
+    {% else %}
+    <div class="tile-img">{{ icon('photo') }}</div>
+    {% endif %}
+    <div class="tile-body">
+      <strong>{{ si.name }}</strong>
+      {% if si.description %}<div style="color:var(--text-secondary);font-size:12px;">{{ si.description }}</div>{% endif %}
+      <form method="post" action="{{ url_for('inspiracje_tile_from_saved', house_id=house.id, iid=si.id) }}" style="margin-top:6px;display:flex;gap:6px;">
+        <select name="category_id" style="flex:1;padding:6px 8px;font-size:12px;">
+          {% for cat in house.inspiration_categories %}
+          <option value="{{ cat.id }}">{{ cat.name }}</option>
+          {% endfor %}
+        </select>
+        <button class="icon-btn" type="submit" title="dodaj do pokoju">{{ icon('plus') }}</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
 {% for cat in house.inspiration_categories %}
 <h2>{{ cat.name }} <span style="color:var(--text-muted);font-weight:400;font-size:13px;">· {{ cat.tiles|length }} kafelki</span></h2>
 <div class="masonry">
@@ -16,14 +44,30 @@
     <div class="tile-body">
       <strong>{{ t.name }}</strong>
       {% if t.description %}<div style="color:var(--text-secondary);font-size:12px;">{{ t.description }}</div>{% endif %}
-      {% if t.link %}<a href="{{ t.link }}" target="_blank" style="font-size:12px;">link →</a>{% endif %}
-      <a href="{{ url_for('inspiracje_tile_delete_confirm', house_id=house.id, tile_id=t.id) }}" style="display:block;margin-top:4px;font-size:12px;color:var(--coral);">{{ icon('trash') }} usuń</a>
+      <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap;">
+        {% if t.link %}<a href="{{ t.link }}" target="_blank" class="tile-btn">{{ icon('chevron-right', size=13) }} link</a>{% endif %}
+        <a href="{{ url_for('inspiracje_tile_delete_confirm', house_id=house.id, tile_id=t.id) }}" class="tile-btn danger">{{ icon('trash', size=13) }} usuń</a>
+      </div>
     </div>
   </div>
   {% endfor %}
 </div>
 <details class="card">
   <summary style="cursor:pointer;font-size:13px;color:var(--text-secondary);">+ dodaj kafelek</summary>
+  {% set saved_insp = current_saved_inspirations() %}
+  {% if saved_insp %}
+  <p class="muted" style="margin:10px 0 6px;">dodaj z roboczych:</p>
+  {% for si in saved_insp %}
+  <div class="saved-item">
+    <div><strong>{{ si.name }}</strong></div>
+    <form method="post" action="{{ url_for('inspiracje_tile_from_saved', house_id=house.id, iid=si.id) }}">
+      <input type="hidden" name="category_id" value="{{ cat.id }}">
+      <button class="btn" type="submit">{{ icon('plus') }} dodaj</button>
+    </form>
+  </div>
+  {% endfor %}
+  <p class="muted" style="margin:12px 0 6px;">albo dodaj nowy:</p>
+  {% endif %}
   <form method="post" action="{{ url_for('inspiracje_tile_add', house_id=house.id, category_id=cat.id) }}" style="margin-top:8px;" enctype="multipart/form-data">
     <label>nazwa</label>
     <input type="text" name="name" required>

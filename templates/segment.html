@@ -35,6 +35,23 @@
 
 <details class="card">
   <summary style="cursor:pointer;font-weight:600;font-size:14px;">+ dodaj usługę</summary>
+
+  {% if saved_services %}
+  <p class="muted" style="margin:10px 0 6px;">dodaj z roboczych:</p>
+  {% for sv in saved_services %}
+  <div class="saved-item">
+    <div>
+      <strong>{{ sv.company }}</strong>
+      <div style="color:var(--text-muted);font-size:12px;">{{ sv.tag_list|join(', ') }}</div>
+    </div>
+    <form method="post" action="{{ url_for('service_from_saved', house_id=house.id, sid=sv.id) }}">
+      <button class="btn" type="submit">{{ icon('plus') }} dodaj</button>
+    </form>
+  </div>
+  {% endfor %}
+  <p class="muted" style="margin:12px 0 6px;">albo dodaj nową:</p>
+  {% endif %}
+
   <form method="post" action="{{ url_for('service_new', house_id=house.id) }}" style="margin-top:10px;">
     <label>firma</label>
     <input type="text" name="company" placeholder="np. Malujemy Sp. z o.o." required>

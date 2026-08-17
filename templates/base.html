@@ -15,7 +15,8 @@
 <body>
 <header class="topbar">
   <a href="{{ url_for('index') }}" class="brand">{{ icon('home') }} budujemy</a>
-  <nav>
+
+  <nav id="main-nav">
     {% if current_user.is_authenticated %}
     <a href="{{ url_for('index') }}">moje projekty</a>
     <a href="{{ url_for('robocze') }}">robocze</a>
@@ -29,10 +30,34 @@
       <span id="icon-moon">{{ icon('moon') }}</span><span id="icon-sun" style="display:none;">{{ icon('sun') }}</span>
     </button>
   </nav>
+
+  <div class="topbar-right">
+    <button id="menu-toggle" class="btn theme-btn menu-only" type="button" aria-label="menu" aria-expanded="false">
+      {{ icon('menu-2') }}
+    </button>
+  </div>
 </header>
+<div id="nav-backdrop"></div>
 <main class="wrap">
 {% block content %}{% endblock %}
 </main>
+<script>
+  var menuBtn = document.getElementById('menu-toggle');
+  var nav = document.getElementById('main-nav');
+  var backdrop = document.getElementById('nav-backdrop');
+  function closeMenu(){
+    nav.classList.remove('open');
+    backdrop.classList.remove('open');
+    menuBtn.setAttribute('aria-expanded', 'false');
+  }
+  menuBtn.addEventListener('click', function(){
+    var isOpen = nav.classList.toggle('open');
+    backdrop.classList.toggle('open', isOpen);
+    menuBtn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+  });
+  backdrop.addEventListener('click', closeMenu);
+  nav.querySelectorAll('a').forEach(function(a){ a.addEventListener('click', closeMenu); });
+</script>
 <script>
   var root = document.documentElement;
   var btn = document.getElementById('theme-toggle');
@@ -53,16 +78,14 @@
   });
 </script>
 <script>
-  document.querySelectorAll('.type-card').forEach(function(card){
-    var input = card.querySelector('input[type=radio]');
+  document.querySelectorAll('.type-picker').forEach(function(picker){
     function sync(){
-      card.parentElement.querySelectorAll('.type-card').forEach(function(c){ c.classList.remove('selected'); });
-      if (input.checked) card.classList.add('selected');
+      picker.querySelectorAll('.type-card').forEach(function(c){
+        var input = c.querySelector('input[type=radio]');
+        c.classList.toggle('selected', !!(input && input.checked));
+      });
     }
-    input.addEventListener('change', function(){
-      card.parentElement.querySelectorAll('.type-card').forEach(function(c){ c.classList.remove('selected'); });
-      card.classList.add('selected');
-    });
+    picker.addEventListener('change', sync);
     sync();
   });
 </script>
