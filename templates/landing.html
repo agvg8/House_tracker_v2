@@ -18,7 +18,7 @@
     <span class="brand">{{ icon('home') }} budujemy</span>
     <nav>
       {% if current_user.is_authenticated %}
-      <a class="btn btn-primary" href="{{ url_for('index') }}">moje projekty</a>
+      <a class="btn btn-secondary" href="{{ url_for('index') }}">moje projekty</a>
       {% else %}
       <a class="btn" href="{{ url_for('login') }}">zaloguj</a>
       <a class="btn btn-secondary" href="{{ url_for('register') }}">zarejestruj się</a>
