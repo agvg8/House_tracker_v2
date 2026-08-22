@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="{{ url_for('dashboard', house_id=house.id) }}" class="btn back-btn">{{ icon('arrow-left') }} wróć</a>
+<h1>{{ icon('box', size=24) }} metraż i pokoje</h1>
+
+<div class="card color-purple">
+  <h2 style="margin-top:0;">wielkość domu</h2>
+  <form method="post" action="{{ url_for('metraz_update', house_id=house.id) }}">
+    <label>metraż (m²)</label>
+    <input type="number" name="area_m2" step="0.1" min="0" value="{{ house.area_m2 or 0 }}">
+    <label>liczba pokoi</label>
+    <input type="number" name="rooms" min="0" value="{{ house.rooms or 0 }}">
+    <button class="btn btn-primary btn-block" type="submit">zapisz</button>
+  </form>
+</div>
+
+<h2>pokoje</h2>
+{% for r in rooms %}
+<div class="card {{ loop.cycle('color-pink','color-purple','color-teal','color-coral','color-amber','color-green') }}">
+  <div class="icon-actions">
+    <a class="icon-btn" href="{{ url_for('metraz_room_edit', house_id=house.id, item_id=r.id) }}" title="edytuj">{{ icon('tool') }}</a>
+    <a class="icon-btn" href="{{ url_for('item_delete_confirm', house_id=house.id, item_id=r.id) }}" title="usuń">{{ icon('trash') }}</a>
+  </div>
+  <strong>{{ r.name }}</strong>
+  {% if r.room_tag %}<span class="pill" style="margin-left:6px;">{{ r.room_tag }}</span>{% endif %}
+  <p style="margin:6px 0 0;color:var(--text-secondary);">
+    {% if r.computed_area %}{{ "%.2f"|format(r.computed_area) }} m²{% else %}brak podanego metrażu{% endif %}
+    {% if r.room_shape == "rectangular" and r.room_side_a and r.room_side_b %}
+      · {{ "%.2f"|format(r.room_side_a) }} × {{ "%.2f"|format(r.room_side_b) }} m
+    {% endif %}
+  </p>
+</div>
+{% else %}
+<div class="dashed">brak jeszcze pokoi</div>
+{% endfor %}
+
+<details class="card">
+  <summary style="cursor:pointer;font-weight:600;font-size:14px;">+ dodaj pokój</summary>
+  <form method="post" action="{{ url_for('metraz_room_new', house_id=house.id) }}" style="margin-top:10px;">
+    <label>nazwa pokoju</label>
+    <input type="text" name="name" placeholder="np. sypialnia 2" required>
+
+    <label>tag</label>
+    <select name="room_tag" id="room-tag-select">
+      <option value="">bez tagu</option>
+      {% for t in room_tags %}
+      <option value="{{ t }}">{{ t }}</option>
+      {% endfor %}
+      <option value="__custom__">inny (wpisz swój)</option>
+    </select>
+    <input type="text" name="custom_tag" id="custom-tag-input" placeholder="wpisz własny tag" style="display:none;margin-top:8px;">
+
+    <label style="margin-top:14px;">kształt pokoju</label>
+    <div class="type-picker">
+      <label class="type-card">
+        <input type="radio" name="room_shape" value="irregular" checked>
+        {{ icon('list-check') }}
+        <span>nieregularny</span>
+      </label>
+      <label class="type-card">
+        <input type="radio" name="room_shape" value="rectangular">
+        {{ icon('layout') }}
+        <span>prostokątny</span>
+      </label>
+    </div>
+
+    <div id="area-only-field">
+      <label>metraż (m²)</label>
+      <input type="number" name="room_area" id="area-input" step="0.01" min="0">
+    </div>
+
+    <div id="rect-fields" style="display:none;">
+      <label>bok A (m)</label>
+      <input type="number" name="room_side_a" id="side-a-input" step="0.01" min="0">
+      <label>bok B (m)</label>
+      <input type="number" name="room_side_b" id="side-b-input" step="0.01" min="0">
+      <p class="muted" style="margin:4px 0 0;font-size:12px;">wpisz metraż + jeden bok, a drugi wyliczy się sam - albo wpisz oba boki, a metraż wyliczy się sam</p>
+    </div>
+
+    <button class="btn btn-primary btn-block" type="submit" style="margin-top:14px;">dodaj pokój</button>
+  </form>
+</details>
+
+<script>
+  (function(){
+    var tagSelect = document.getElementById('room-tag-select');
+    var customInput = document.getElementById('custom-tag-input');
+    tagSelect.addEventListener('change', function(){
+      customInput.style.display = tagSelect.value === '__custom__' ? 'block' : 'none';
+    });
+
+    var shapeRadios = document.querySelectorAll('input[name="room_shape"]');
+    var rectFields = document.getElementById('rect-fields');
+    function syncShape(){
+      var rect = document.querySelector('input[name="room_shape"]:checked').value === 'rectangular';
+      rectFields.style.display = rect ? 'block' : 'none';
+    }
+    shapeRadios.forEach(function(r){ r.addEventListener('change', syncShape); });
+    syncShape();
+
+    var area = document.getElementById('area-input');
+    var sideA = document.getElementById('side-a-input');
+    var sideB = document.getElementById('side-b-input');
+
+    sideA.addEventListener('input', function(){
+      if (sideB.value) {
+        area.value = (parseFloat(sideA.value||0) * parseFloat(sideB.value||0)).toFixed(2);
+      } else if (area.value) {
+        sideB.value = (parseFloat(area.value||0) / parseFloat(sideA.value||1)).toFixed(2);
+      }
+    });
+    sideB.addEventListener('input', function(){
+      if (sideA.value) {
+        area.value = (parseFloat(sideA.value||0) * parseFloat(sideB.value||0)).toFixed(2);
+      }
+    });
+  })();
+</script>
+{% endblock %}

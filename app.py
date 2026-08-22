@@ -259,6 +259,11 @@ class Item(db.Model):
     is_room = db.Column(db.Boolean, default=False)  # pokoje w wykonczeniu - tylko inspiracje, bez wyceny
     is_custom = db.Column(db.Boolean, default=False)  # dodane przez uzytkownika (moga byc usuniete)
     will_change = db.Column(db.Boolean, default=None)  # None=nie dotyczy, False/True dla instalacji w mieszkaniu/remoncie
+    room_tag = db.Column(db.String(100))  # gabinet/sypialnia/pokoj dziecięcy/wlasny, tylko dla is_room
+    room_area = db.Column(db.Float)  # m2
+    room_shape = db.Column(db.String(20), default="irregular")  # "rectangular" | "irregular"
+    room_side_a = db.Column(db.Float)
+    room_side_b = db.Column(db.Float)
     variants = db.relationship("Variant", backref="item", cascade="all, delete-orphan")
     room_quotes = db.relationship("RoomQuote", backref="item", cascade="all, delete-orphan")
     materials = db.relationship("Material", backref="item", cascade="all, delete-orphan")
@@ -267,6 +272,12 @@ class Item(db.Model):
     @property
     def icon(self):
         return get_item_icon(self)
+
+    @property
+    def computed_area(self):
+        if self.room_shape == "rectangular" and self.room_side_a and self.room_side_b:
+            return round(self.room_side_a * self.room_side_b, 2)
+        return self.room_area
 
     @property
     def budget_options(self):
@@ -539,6 +550,97 @@ def dashboard(house_id):
 
     return render_template("dashboard.html", house=house, lo_total=lo_total, hi_total=hi_total,
                             breakdown=breakdown, slices=slices, center_value=center_value, center_label=center_label)
+
+
+ROOM_TAGS = ["gabinet", "sypialnia", "pokój dziecięcy"]
+
+
+@app.route("/house/<int:house_id>/metraz")
+@login_required
+def metraz(house_id):
+    house = get_owned_house(house_id)
+    rooms = Item.query.filter_by(house_id=house_id, segment_key="wykonczenie", is_room=True).all()
+    return render_template("metraz.html", house=house, rooms=rooms, room_tags=ROOM_TAGS)
+
+
+@app.route("/house/<int:house_id>/metraz/update", methods=["POST"])
+@login_required
+def metraz_update(house_id):
+    house = get_owned_house(house_id)
+    house.area_m2 = float(request.form.get("area_m2") or 0)
+    house.rooms = int(request.form.get("rooms") or 0)
+    db.session.commit()
+    return redirect(url_for("metraz", house_id=house_id))
+
+
+@app.route("/house/<int:house_id>/metraz/room/new", methods=["POST"])
+@login_required
+def metraz_room_new(house_id):
+    name = (request.form.get("name") or "").strip()
+    if not name:
+        return redirect(url_for("metraz", house_id=house_id))
+    tag = request.form.get("room_tag") or ""
+    custom_tag = (request.form.get("custom_tag") or "").strip()
+    if tag == "__custom__":
+        tag = custom_tag
+
+    shape = request.form.get("room_shape") or "irregular"
+    area = float(request.form.get("room_area") or 0) or None
+    side_a = float(request.form.get("room_side_a") or 0) or None
+    side_b = float(request.form.get("room_side_b") or 0) or None
+    if shape == "irregular":
+        side_a = side_b = None
+
+    item = Item(house_id=house_id, segment_key="wykonczenie", name=name, is_room=True, is_custom=True,
+                room_tag=tag or None, room_area=area, room_shape=shape, room_side_a=side_a, room_side_b=side_b)
+    db.session.add(item)
+    db.session.commit()
+
+    if not InspirationCategory.query.filter_by(house_id=house_id, name=name).first():
+        db.session.add(InspirationCategory(house_id=house_id, name=name))
+        db.session.commit()
+
+    return redirect(url_for("metraz", house_id=house_id))
+
+
+@app.route("/house/<int:house_id>/metraz/room/<int:item_id>/edit", methods=["GET", "POST"])
+@login_required
+def metraz_room_edit(house_id, item_id):
+    house = get_owned_house(house_id)
+    room = Item.query.get_or_404(item_id)
+    if room.house_id != house_id or not room.is_room:
+        abort(404)
+
+    if request.method == "POST":
+        old_name = room.name
+        new_name = (request.form.get("name") or "").strip() or old_name
+
+        tag = request.form.get("room_tag") or ""
+        custom_tag = (request.form.get("custom_tag") or "").strip()
+        if tag == "__custom__":
+            tag = custom_tag
+        room.room_tag = tag or None
+
+        room.room_shape = request.form.get("room_shape") or "irregular"
+        area = float(request.form.get("room_area") or 0) or None
+        side_a = float(request.form.get("room_side_a") or 0) or None
+        side_b = float(request.form.get("room_side_b") or 0) or None
+        if room.room_shape == "irregular":
+            side_a = side_b = None
+        room.room_area = area
+        room.room_side_a = side_a
+        room.room_side_b = side_b
+
+        if new_name != old_name:
+            room.name = new_name
+            cat = InspirationCategory.query.filter_by(house_id=house_id, name=old_name).first()
+            if cat:
+                cat.name = new_name
+
+        db.session.commit()
+        return redirect(url_for("metraz", house_id=house_id))
+
+    return render_template("metraz_room_edit.html", house=house, room=room, room_tags=ROOM_TAGS)
 
 
 @app.route("/house/<int:house_id>/segment/new", methods=["POST"])
@@ -842,6 +944,10 @@ def item_delete_confirm(house_id, item_id):
 def item_delete(house_id, item_id):
     item = Item.query.get_or_404(item_id)
     segment_key = item.segment_key
+    if item.is_room:
+        cat = InspirationCategory.query.filter_by(house_id=house_id, name=item.name).first()
+        if cat:
+            db.session.delete(cat)
     db.session.delete(item)
     db.session.commit()
     return redirect(url_for("segment_view", house_id=house_id, segment_key=segment_key))

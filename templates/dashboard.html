@@ -37,10 +37,10 @@
       <span class="info-value">{{ (house.budget_total/1000)|round|int }} tys zł</span>
     </div>
     {% endif %}
-    <div class="info-block color-purple">
+    <a class="info-block color-purple" href="{{ url_for('metraz', house_id=house.id) }}">
       <span class="info-label">{{ icon('box', size=14) }} metraż i pokoje</span>
       <span class="info-value">{{ house.area_m2|int }} m² · {{ house.rooms }} pokoi</span>
-    </div>
+    </a>
     {% if house.link %}
     <a class="info-block color-amber" href="{{ house.link }}" target="_blank">
       <span class="info-label">{{ icon('chevron-right', size=14) }} link do projektu</span>

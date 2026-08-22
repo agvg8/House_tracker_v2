@@ -20,7 +20,7 @@
     <a class="btn btn-primary" href="{{ url_for('index') }}">moje projekty</a>
     {% else %}
     <a class="btn" href="{{ url_for('login') }}">zaloguj</a>
-    <a class="btn btn-primary" href="{{ url_for('register') }}">zarejestruj się</a>
+    <a class="btn btn-secondary" href="{{ url_for('register') }}">zarejestruj się</a>
     {% endif %}
     <button id="theme-toggle" class="btn theme-btn" type="button" aria-label="przełącz motyw">
       <span id="icon-moon">{{ icon('moon') }}</span><span id="icon-sun" style="display:none;">{{ icon('sun') }}</span>

@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="{{ url_for('metraz', house_id=house.id) }}" class="btn back-btn">{{ icon('arrow-left') }} wróć</a>
+<h1>edytuj pokój</h1>
+
+<form method="post">
+  <label>nazwa pokoju</label>
+  <input type="text" name="name" value="{{ room.name }}" required>
+
+  <label>tag</label>
+  <select name="room_tag" id="room-tag-select">
+    <option value="">bez tagu</option>
+    {% for t in room_tags %}
+    <option value="{{ t }}" {% if room.room_tag == t %}selected{% endif %}>{{ t }}</option>
+    {% endfor %}
+    <option value="__custom__" {% if room.room_tag and room.room_tag not in room_tags %}selected{% endif %}>inny (wpisz swój)</option>
+  </select>
+  <input type="text" name="custom_tag" id="custom-tag-input"
+         value="{{ room.room_tag if room.room_tag and room.room_tag not in room_tags else '' }}"
+         placeholder="wpisz własny tag"
+         style="{{ 'display:none;' if not (room.room_tag and room.room_tag not in room_tags) else '' }}margin-top:8px;">
+
+  <label style="margin-top:14px;">kształt pokoju</label>
+  <div class="type-picker">
+    <label class="type-card">
+      <input type="radio" name="room_shape" value="irregular" {% if room.room_shape != 'rectangular' %}checked{% endif %}>
+      {{ icon('list-check') }}
+      <span>nieregularny</span>
+    </label>
+    <label class="type-card">
+      <input type="radio" name="room_shape" value="rectangular" {% if room.room_shape == 'rectangular' %}checked{% endif %}>
+      {{ icon('layout') }}
+      <span>prostokątny</span>
+    </label>
+  </div>
+
+  <label>metraż (m²)</label>
+  <input type="number" name="room_area" id="area-input" step="0.01" min="0" value="{{ room.computed_area or 0 }}">
+
+  <div id="rect-fields" style="{{ 'display:none;' if room.room_shape != 'rectangular' else '' }}">
+    <label>bok A (m)</label>
+    <input type="number" name="room_side_a" id="side-a-input" step="0.01" min="0" value="{{ room.room_side_a or 0 }}">
+    <label>bok B (m)</label>
+    <input type="number" name="room_side_b" id="side-b-input" step="0.01" min="0" value="{{ room.room_side_b or 0 }}">
+    <p class="muted" style="margin:4px 0 0;font-size:12px;">wpisz metraż + jeden bok, a drugi wyliczy się sam - albo wpisz oba boki, a metraż wyliczy się sam</p>
+  </div>
+
+  <button class="btn btn-primary btn-block" type="submit" style="margin-top:14px;">zapisz zmiany</button>
+</form>
+
+<script>
+  (function(){
+    var tagSelect = document.getElementById('room-tag-select');
+    var customInput = document.getElementById('custom-tag-input');
+    tagSelect.addEventListener('change', function(){
+      customInput.style.display = tagSelect.value === '__custom__' ? 'block' : 'none';
+    });
+
+    var shapeRadios = document.querySelectorAll('input[name="room_shape"]');
+    var rectFields = document.getElementById('rect-fields');
+    function syncShape(){
+      var rect = document.querySelector('input[name="room_shape"]:checked').value === 'rectangular';
+      rectFields.style.display = rect ? 'block' : 'none';
+    }
+    shapeRadios.forEach(function(r){ r.addEventListener('change', syncShape); });
+
+    var area = document.getElementById('area-input');
+    var sideA = document.getElementById('side-a-input');
+    var sideB = document.getElementById('side-b-input');
+
+    sideA.addEventListener('input', function(){
+      if (sideB.value) {
+        area.value = (parseFloat(sideA.value||0) * parseFloat(sideB.value||0)).toFixed(2);
+      } else if (area.value) {
+        sideB.value = (parseFloat(area.value||0) / parseFloat(sideA.value||1)).toFixed(2);
+      }
+    });
+    sideB.addEventListener('input', function(){
+      if (sideA.value) {
+        area.value = (parseFloat(sideA.value||0) * parseFloat(sideB.value||0)).toFixed(2);
+      }
+    });
+  })();
+</script>
+{% endblock %}
