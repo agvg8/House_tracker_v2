@@ -55,6 +55,18 @@ def icon(name, size=18, cls=""):
 app.jinja_env.globals["icon"] = icon
 
 
+def format_tys(value):
+    """Formatuje kwote w zl jako tysiace z 2 miejscami po przecinku, styl polski (przecinek)."""
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        value = 0
+    return f"{value/1000:.2f}".replace(".", ",")
+
+
+app.jinja_env.filters["tys"] = format_tys
+
+
 def current_saved_products():
     if not current_user.is_authenticated:
         return []
@@ -541,18 +553,31 @@ def dashboard(house_id):
         s["dashoffset"] = f"-{offset:.1f}"
         offset += length
 
-    center_label = "tys zł łącznie"
-    if house.budget_total:
-        center_value = f"{(remaining/1000):.0f}"
-        center_label = "tys zł pozostało"
-    else:
-        center_value = f"{(lo_total/1000):.0f}–{(hi_total/1000):.0f}"
+    center_label = "tys zł pozostało" if house.budget_total else "tys zł łącznie"
 
     return render_template("dashboard.html", house=house, lo_total=lo_total, hi_total=hi_total,
-                            breakdown=breakdown, slices=slices, center_value=center_value, center_label=center_label)
+                            breakdown=breakdown, slices=slices, remaining=remaining, center_label=center_label)
 
 
 ROOM_TAGS = ["gabinet", "sypialnia", "pokój dziecięcy"]
+
+
+def sync_house_from_rooms(house_id):
+    """Aktualizuje metraz calkowity (suma metrazy pokoi) i liczbe pokoi (sypialnie +
+    pokoje dziecięce + gabinety + wszystkie dodane recznie przez uzytkownika)."""
+    house = db.session.get(House, house_id)
+    rooms = Item.query.filter_by(house_id=house_id, segment_key="wykonczenie", is_room=True).all()
+
+    total_area = sum(r.computed_area or 0 for r in rooms)
+    if total_area > 0:
+        house.area_m2 = round(total_area, 2)
+
+    count = sum(
+        1 for r in rooms
+        if r.is_custom or (r.name or "").strip().lower() == "sypialnia" or (r.room_tag in ROOM_TAGS)
+    )
+    house.rooms = count
+    db.session.commit()
 
 
 @app.route("/house/<int:house_id>/metraz")
@@ -600,6 +625,7 @@ def metraz_room_new(house_id):
         db.session.add(InspirationCategory(house_id=house_id, name=name))
         db.session.commit()
 
+    sync_house_from_rooms(house_id)
     return redirect(url_for("metraz", house_id=house_id))
 
 
@@ -638,6 +664,7 @@ def metraz_room_edit(house_id, item_id):
                 cat.name = new_name
 
         db.session.commit()
+        sync_house_from_rooms(house_id)
         return redirect(url_for("metraz", house_id=house_id))
 
     return render_template("metraz_room_edit.html", house=house, room=room, room_tags=ROOM_TAGS)
@@ -944,12 +971,15 @@ def item_delete_confirm(house_id, item_id):
 def item_delete(house_id, item_id):
     item = Item.query.get_or_404(item_id)
     segment_key = item.segment_key
+    was_room = item.is_room
     if item.is_room:
         cat = InspirationCategory.query.filter_by(house_id=house_id, name=item.name).first()
         if cat:
             db.session.delete(cat)
     db.session.delete(item)
     db.session.commit()
+    if was_room:
+        sync_house_from_rooms(house_id)
     return redirect(url_for("segment_view", house_id=house_id, segment_key=segment_key))
 
 
@@ -1219,6 +1249,45 @@ def saved_product_delete(pid):
     if p.user_id != current_user.id:
         abort(404)
     db.session.delete(p)
+    db.session.commit()
+    return redirect(url_for("robocze"))
+
+
+EXAMPLE_SERVICES = [
+    {"company": "Bracia Kowalscy", "tags": ["tynki", "płyty G-K"],
+     "description": "polecani, szybki termin realizacji", "link": ""},
+    {"company": "ElektroMax", "tags": ["elektryk (gniazdka)"],
+     "description": "instalacje elektryczne, pomiary", "link": ""},
+    {"company": "HydroFlow", "tags": ["hydraulik (rurowanie)"],
+     "description": "hydraulika, ogrzewanie podłogowe", "link": ""},
+    {"company": "Parkiet Expert", "tags": ["parkiety", "panele"],
+     "description": "układanie i cyklinowanie", "link": ""},
+    {"company": "GlazBud", "tags": ["glazurnik", "posadzki"],
+     "description": "glazura, terakota, mozaiki", "link": ""},
+    {"company": "MalPro", "tags": ["malarz"],
+     "description": "malowanie, gładzie, tapetowanie", "link": ""},
+    {"company": "StolMistrz", "tags": ["stolarz"],
+     "description": "meble na wymiar, zabudowy", "link": ""},
+    {"company": "OciepleniaPlus", "tags": ["ocieplenia"],
+     "description": "ocieplenia elewacji i poddaszy", "link": ""},
+    {"company": "TapicerArt", "tags": ["tapicer"],
+     "description": "tapicerowanie mebli i wnęk", "link": ""},
+    {"company": "Wszystko w Jednym", "tags": ["tynki", "malarz", "płyty G-K"],
+     "description": "ekipa remontowa - kompleksowo", "link": ""},
+]
+
+
+@app.route("/robocze/seed-example-services", methods=["POST"])
+@login_required
+def seed_example_services():
+    existing_companies = {s.company for s in SavedService.query.filter_by(user_id=current_user.id).all()}
+    for ex in EXAMPLE_SERVICES:
+        if ex["company"] in existing_companies:
+            continue
+        db.session.add(SavedService(
+            user_id=current_user.id, company=ex["company"], tags=",".join(ex["tags"]),
+            description=ex["description"], link=ex["link"] or None,
+        ))
     db.session.commit()
     return redirect(url_for("robocze"))
 

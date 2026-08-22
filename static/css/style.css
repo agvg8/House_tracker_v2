@@ -25,8 +25,20 @@
   --radius:10px;
 }
 *{box-sizing:border-box;}
-body{margin:0;font-family:-apple-system,'Segoe UI',sans-serif;background:var(--page);color:var(--text);font-size:15px;transition:background .15s,color .15s;}
-.topbar{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;background:var(--surface);border-bottom:0.5px solid var(--border);position:relative;z-index:20;}
+body{margin:0;font-family:-apple-system,'Segoe UI',sans-serif;background:var(--page);color:var(--text);font-size:15px;transition:background .15s,color .15s;display:flex;flex-direction:column;align-items:center;min-height:100vh;}
+main.wrap{flex:1;}
+.topbar,.site-footer{width:100%;box-sizing:border-box;}
+.site-footer{border-top:0.5px solid var(--border);padding:1.25rem 0;margin-top:2rem;}
+.site-footer .wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:0;margin:0 auto;width:60%;max-width:960px;min-width:320px;box-sizing:border-box;}
+.site-footer span{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);font-weight:600;}
+.site-footer span.muted{font-weight:400;}
+.topbar{background:var(--surface);border-bottom:0.5px solid var(--border);position:relative;z-index:20;}
+.topbar-inner{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.25rem;
+  width:60%;max-width:960px;min-width:320px;margin:0 auto;box-sizing:border-box;}
+
+@media (max-width:900px){
+  .topbar-inner,.site-footer .wrap,.wrap{width:100%;max-width:none;}
+}
 .brand{font-weight:600;text-decoration:none;color:var(--text);display:flex;align-items:center;gap:8px;font-size:16px;white-space:nowrap;}
 .topbar-right{display:flex;align-items:center;gap:8px;}
 .topbar nav{display:flex;align-items:center;}
@@ -54,7 +66,7 @@ body{margin:0;font-family:-apple-system,'Segoe UI',sans-serif;background:var(--p
   .icon-actions{gap:4px;top:1rem;right:1rem;}
   .icon-btn{width:28px;height:28px;}
 }
-.wrap{max-width:760px;margin:0 auto;padding:2rem 1.5rem;}
+.wrap{width:60%;max-width:760px;min-width:320px;box-sizing:border-box;margin:0 auto;padding:2rem 1.5rem;}
 .back-link{font-size:13px;color:var(--text-secondary);text-decoration:none;}
 h1{font-size:23px;font-weight:600;margin:0 0 6px;}
 h2{font-size:18px;font-weight:600;margin:1.5rem 0 12px;}

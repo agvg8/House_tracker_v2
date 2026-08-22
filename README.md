@@ -117,3 +117,42 @@ Cloudinary) - to nie jest jeszcze zrobione w tej wersji.
   przyciskiem "+" żeby przypisać bez otwierania konkretnego pokoju.
 - Stary model SavedSolution (jedna wspólna "biblioteka materiałów") został
   zastąpiony przez SavedProduct - wymaga usunięcia bazy.
+
+## Poprawki (ta tura)
+- Metraż i liczba pokoi domu aktualizują się automatycznie na podstawie
+  pokoi: metraż = suma metraży wszystkich pokoi, które go mają ustawionego;
+  liczba pokoi = sypialnie + pokoje dziecięce + gabinety + wszystkie pokoje
+  dodane ręcznie przez użytkownika (niezależnie od tagu). Domyślne pokoje
+  bez tagu (kuchnia, łazienka, strefa dzienna, korytarz) się NIE liczą.
+- "Dodaj wycenę" w pokoju: żadna opcja nie jest domyślnie zaznaczona i żaden
+  formularz się nie pokazuje, dopóki nie wybierzesz "sam(a) wykonam" albo
+  "zatrudniam fachowca".
+- Przycisk na stronie /robocze: "wypełnij przykładowymi usługami (do testów)"
+  - dodaje 10 przykładowych firm z różnymi (czasem kilkoma) tagami, żeby móc
+    testować przepływ "dodaj z roboczych" bez ręcznego wymyślania danych.
+    Pomija duplikaty po nazwie firmy przy ponownym kliknięciu.
+- Kwoty w tys zł na dashboardzie mają teraz 2 miejsca po przecinku w stylu
+  polskim (np. "565,12 tys zł" zamiast zaokrąglenia do "565").
+- Przycisk "zarejestruj się" w górnym menu (dla niezalogowanych) jest różowy
+  (styl .btn-primary) z grafitowym tekstem dla kontrastu.
+- Dodana stopka na dole każdej strony.
+
+## Szerokość aplikacji (ta tura)
+- Cała aplikacja (nagłówek, treść, stopka) jest teraz spójnie ograniczona do
+  60% szerokości ekranu (max. 960px, żeby nie rozciągało się w nieskończoność
+  na bardzo szerokich monitorach) - wcześniej sam navbar/stopka były
+  pełnej szerokości, a tylko treść była węższa, co wyglądało niespójnie.
+- Puste marginesy po bokach (ok. 20% z każdej strony na typowym ekranie) to
+  docelowo miejsce pod banery Google AdSense - nic tam jeszcze nie ma, ale
+  layout już zostawia na to przestrzeń.
+- Poniżej 900px szerokości ekranu (tablety/telefony) aplikacja wraca do
+  pełnej szerokości - węższy layout na małym ekranie byłby bezużyteczny.
+
+## Navbar i stopka na całą szerokość (ta tura)
+- Tło paska nawigacji (.topbar) i stopki (.site-footer) znów rozciąga się na
+  100% szerokości ekranu - tak jak w typowych layoutach.
+- Ich ZAWARTOŚĆ (logo, linki, tekst stopki) jest wewnątrz nowego kontenera
+  .topbar-inner (i istniejącego .site-footer .wrap), który ma tę samą
+  szerokość 60%/max 960px co główna treść (.wrap) - więc wszystko nadal
+  wizualnie się wyrównuje w jedną kolumnę, tylko tła paska górnego i stopki
+  sięgają brzegów ekranu.

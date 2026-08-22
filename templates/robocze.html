@@ -15,6 +15,10 @@
   </button>
 </div>
 
+<form method="post" action="{{ url_for('seed_example_services') }}">
+  <button class="btn btn-block" type="submit">{{ icon('users') }} wypełnij przykładowymi usługami (do testów)</button>
+</form>
+
 {% if services %}
 <h2>{{ icon('users', size=18) }} usługi</h2>
 <div class="grid-3">

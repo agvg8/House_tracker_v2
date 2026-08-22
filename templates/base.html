@@ -14,33 +14,41 @@
 </head>
 <body>
 <header class="topbar">
-  <a href="{{ url_for('index') }}" class="brand">{{ icon('home') }} budujemy</a>
+  <div class="topbar-inner">
+    <a href="{{ url_for('index') }}" class="brand">{{ icon('home') }} budujemy</a>
 
-  <nav id="main-nav">
-    {% if current_user.is_authenticated %}
-    <a href="{{ url_for('index') }}">moje projekty</a>
-    <a href="{{ url_for('robocze') }}">robocze</a>
-    <a href="{{ url_for('account') }}">konto</a>
-    <a href="{{ url_for('logout') }}">wyloguj</a>
-    {% else %}
-    <a href="{{ url_for('login') }}">zaloguj</a>
-    <a href="{{ url_for('register') }}">zarejestruj się</a>
-    {% endif %}
-    <button id="theme-toggle" class="btn theme-btn" type="button" aria-label="przełącz motyw">
-      <span id="icon-moon">{{ icon('moon') }}</span><span id="icon-sun" style="display:none;">{{ icon('sun') }}</span>
-    </button>
-  </nav>
+    <nav id="main-nav">
+      {% if current_user.is_authenticated %}
+      <a href="{{ url_for('index') }}">moje projekty</a>
+      <a href="{{ url_for('robocze') }}">robocze</a>
+      <a href="{{ url_for('account') }}">konto</a>
+      <a href="{{ url_for('logout') }}">wyloguj</a>
+      {% else %}
+      <a href="{{ url_for('login') }}">zaloguj</a>
+      <a href="{{ url_for('register') }}" class="btn btn-primary" style="margin-left:20px;">zarejestruj się</a>
+      {% endif %}
+      <button id="theme-toggle" class="btn theme-btn" type="button" aria-label="przełącz motyw">
+        <span id="icon-moon">{{ icon('moon') }}</span><span id="icon-sun" style="display:none;">{{ icon('sun') }}</span>
+      </button>
+    </nav>
 <!--
   <div class="topbar-right">
     <button id="menu-toggle" class="btn theme-btn menu-only" type="button" aria-label="menu" aria-expanded="false">
       {{ icon('menu-2') }}
     </button>
   </div>-->
+  </div>
 </header>
 <div id="nav-backdrop"></div>
 <main class="wrap">
 {% block content %}{% endblock %}
 </main>
+<footer class="site-footer">
+  <div class="wrap">
+    <span>{{ icon('home', size=16) }} budujemy</span>
+    <span class="muted">© 2026 - planer budowy, mieszkania i remontu</span>
+  </div>
+</footer>
 <script>
   var menuBtn = document.getElementById('menu-toggle');
   var nav = document.getElementById('main-nav');
