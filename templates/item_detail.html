@@ -5,8 +5,14 @@
 <h1><span style="margin-right:8px;display:inline-block;">{{ icon(item.icon, size=24) }}</span>{{ item.name }}</h1>
 
 {% if item.is_room %}
-  <h2>{{ icon('users', size=18) }} wykonawcy</h2>
   {% set quote_total = item.room_quotes|selectattr('include_in_budget')|sum(attribute='price') %}
+  {% set materials_total = item.materials|selectattr('include_in_budget')|sum(attribute='price') %}
+  <div class="total-badge">
+    <span>{{ icon('moneybag', size=16) }} razem w tym pokoju</span>
+    <span>{{ (quote_total + materials_total)|int }} zł</span>
+  </div>
+
+  <h2>{{ icon('users', size=18) }} wykonawcy</h2>
   <div class="total-badge">
     <span>{{ icon('moneybag', size=16) }} razem wyceny (zaznaczone)</span>
     <span>{{ quote_total|int }} zł</span>
@@ -14,10 +20,12 @@
   {% for q in item.room_quotes %}
   <div class="card {{ loop.cycle('color-pink','color-purple','color-teal','color-coral','color-amber','color-green') }}" style="{{ 'opacity:0.5;' if not q.include_in_budget else '' }}">
     <div class="icon-actions">
+      <a class="icon-btn" href="{{ url_for('quote_edit', house_id=house.id, quote_id=q.id) }}" title="edytuj">{{ icon('tool') }}</a>
+      <a class="icon-btn" href="{{ url_for('quote_delete_confirm', house_id=house.id, quote_id=q.id) }}" title="usuń">{{ icon('trash') }}</a>
       <form method="post" action="{{ url_for('quote_toggle_include', house_id=house.id, quote_id=q.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <button class="icon-btn {{ 'active' if q.include_in_budget else '' }}" type="submit" title="liczy się do budżetu">{{ icon('moneybag') }}</button>
       </form>
-      <a class="icon-btn" href="{{ url_for('quote_delete_confirm', house_id=house.id, quote_id=q.id) }}" title="usuń">{{ icon('trash') }}</a>
     </div>
     <div style="display:flex;justify-content:space-between;align-items:flex-start;">
       <div>
@@ -39,6 +47,10 @@
   {{ tasks_section(house, item) }}
 
   <h2>{{ icon('box', size=18) }} produkty</h2>
+  <div class="total-badge">
+    <span>{{ icon('moneybag', size=16) }} razem produkty (zaznaczone)</span>
+    <span>{{ materials_total|int }} zł</span>
+  </div>
   {{ materials_section(house, item) }}
 
 {% elif item.will_change is not none %}
@@ -46,6 +58,7 @@
   <div class="card color-teal">
     <p style="margin:0 0 10px;">Ta instalacja <strong>nie będzie zmieniana</strong> - zostaje bez ingerencji.</p>
     <form method="post" action="{{ url_for('item_toggle_will_change', house_id=house.id, item_id=item.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="btn btn-primary" type="submit">jednak będzie zmieniana</button>
     </form>
   </div>
@@ -53,6 +66,7 @@
   <div class="card color-amber" style="display:flex;justify-content:space-between;align-items:center;">
     <span>ta instalacja <strong>będzie zmieniana</strong></span>
     <form method="post" action="{{ url_for('item_toggle_will_change', house_id=house.id, item_id=item.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="btn" type="submit">jednak zostaje bez zmian</button>
     </form>
   </div>
@@ -65,16 +79,58 @@
   {% endif %}
 
 {% else %}
-  {% if item.excluded %}<div class="pill" style="margin-bottom:10px;">nie wliczam w koszta</div>{% endif %}
+  {% if item.template == 2 and item.excluded %}
+  <div class="card color-teal">
+    <p style="margin:0 0 10px;">Ta pozycja <strong>nie jest wliczana do budżetu</strong> - nie dotyczy Cię.</p>
+    <form method="post" action="{{ url_for('item_toggle_excluded', house_id=house.id, item_id=item.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-primary" type="submit">cofnij "nie wliczam w koszta"</button>
+    </form>
+  </div>
+  {% else %}
   {{ variants_section(house, item) }}
 
   {% if item.template == 2 %}
   <form method="post" action="{{ url_for('item_toggle_excluded', house_id=house.id, item_id=item.id) }}" style="margin-top:10px;">
-    <button class="btn" type="submit">
-      {% if item.excluded %}cofnij "nie wliczam w koszta"{% else %}nie dotyczy mnie / nie wliczam w koszta{% endif %}
-    </button>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn" type="submit">nie dotyczy mnie / nie wliczam w koszta</button>
   </form>
   {% endif %}
+  {% endif %}
+
+  <h2>{{ icon('file-text', size=18) }} dokumenty</h2>
+  {% for d in documents %}
+  <div class="card {{ loop.cycle('color-pink','color-purple','color-teal','color-coral','color-amber','color-green') }}">
+    <div class="icon-actions">
+      <a class="icon-btn" href="{{ url_for('document_delete_confirm', house_id=house.id, doc_id=d.id) }}" title="usuń">{{ icon('trash') }}</a>
+    </div>
+    <strong>{{ d.name }}</strong>
+    {% if d.description %}<p style="margin:4px 0 0;color:var(--text-secondary);">{{ d.description }}</p>{% endif %}
+    {% if d.filename %}
+    <a href="{{ url_for('static', filename='uploads/' + d.filename) }}" target="_blank" class="tile-btn" style="margin-top:6px;">
+      {{ icon('file-text', size=13) }} {% if d.file_type == 'pdf' %}otwórz PDF{% else %}zobacz zdjęcie{% endif %}
+    </a>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="dashed">brak jeszcze dokumentów</div>
+  {% endfor %}
+
+  <details class="card">
+    <summary style="cursor:pointer;font-weight:600;font-size:14px;">+ dodaj dokument</summary>
+    <form method="post" action="{{ url_for('document_new', house_id=house.id, segment_key=item.segment_key) }}" style="margin-top:10px;" enctype="multipart/form-data">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="item_id" value="{{ item.id }}">
+      <input type="hidden" name="next" value="{{ url_for('item_detail', house_id=house.id, item_id=item.id) }}">
+      <label>nazwa dokumentu</label>
+      <input type="text" name="name" placeholder="np. projekt architektoniczny" required>
+      <label>opis (opcjonalnie)</label>
+      <textarea name="description"></textarea>
+      <label>plik (PDF lub zdjęcie)</label>
+      <input type="file" name="file" accept="application/pdf,image/*">
+      <button class="btn btn-primary btn-block" type="submit">dodaj dokument</button>
+    </form>
+  </details>
 
   {% if item.is_custom %}
   <a href="{{ url_for('item_delete_confirm', house_id=house.id, item_id=item.id) }}" style="display:inline-block;margin-top:14px;font-size:13px;color:var(--coral);">
@@ -116,6 +172,7 @@
   <div class="saved-item">
     <div><strong>{{ si.name }}</strong></div>
     <form method="post" action="{{ url_for('inspiracje_tile_from_saved', house_id=house.id, iid=si.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <input type="hidden" name="category_id" value="{{ insp_category.id }}">
       <input type="hidden" name="next" value="{{ url_for('item_detail', house_id=house.id, item_id=item.id) }}">
       <button class="btn" type="submit">{{ icon('plus') }} dodaj</button>
@@ -126,6 +183,7 @@
   {% endif %}
 
   <form method="post" action="{{ url_for('inspiracje_tile_add', house_id=house.id, category_id=insp_category.id) }}" style="margin-top:10px;" enctype="multipart/form-data">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="hidden" name="next" value="{{ url_for('item_detail', house_id=house.id, item_id=item.id) }}">
     <label>nazwa</label>
     <input type="text" name="name" required>

@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
-<h1>{{ house.name }}</h1>
+<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+  <h1 style="margin:0;">{{ house.name }}</h1>
+  <a class="btn" href="{{ url_for('house_collab', house_id=house.id) }}">{{ icon('users', size=16) }} współpraca</a>
+</div>
 
 <div class="dash-header">
   <svg width="220" height="220" viewBox="0 0 200 200" class="donut-svg">
@@ -75,6 +78,7 @@
 <details class="card">
   <summary style="cursor:pointer;font-weight:600;font-size:14px;">+ dodaj sekcję</summary>
   <form method="post" action="{{ url_for('segment_new', house_id=house.id) }}" style="margin-top:10px;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <input type="text" name="name" placeholder="np. taras, garaż" required>
     <button class="btn btn-primary btn-block" type="submit">dodaj sekcję</button>
   </form>

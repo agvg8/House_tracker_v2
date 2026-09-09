@@ -156,3 +156,173 @@ Cloudinary) - to nie jest jeszcze zrobione w tej wersji.
   szerokość 60%/max 960px co główna treść (.wrap) - więc wszystko nadal
   wizualnie się wyrównuje w jedną kolumnę, tylko tła paska górnego i stopki
   sięgają brzegów ekranu.
+
+## Audyt bezpieczeństwa (ta tura)
+
+### Naprawione krytyczne luki (IDOR - dostęp do cudzych danych przez ID w URL)
+Dziesiątki tras (warianty, materiały, wyceny pokoi, usługi, zadania, pozycje,
+sekcje, kafelki inspiracji) pobierały obiekty po samym ID bez sprawdzenia,
+czy należą do zalogowanego użytkownika. Dodano komplet funkcji
+`get_owned_*()`, które to weryfikują - każda taka trasa teraz zwraca 404
+zamiast pozwolić na podejrzenie/edycję/usunięcie cudzych danych. Przetestowane
+end-to-end na dwóch kontach (użytkownik B nie widzi ani nie może modyfikować
+niczego z konta użytkownika A).
+
+### CSRF protection
+Dodano Flask-WTF (CSRFProtect) - token wstrzyknięty automatycznie do
+wszystkich 48 formularzy w aplikacji. Żądanie POST bez poprawnego tokenu
+jest odrzucane (400). Bez tego dowolna złośliwa strona mogłaby wysłać
+żądanie w imieniu zalogowanego użytkownika (np. usuń mój dom) samym linkiem
+lub ukrytym formularzem.
+
+### Walidacja liczb i tekstu po stronie serwera
+- Nowe funkcje `clamp_number()`/`clamp_int()` - wszystkie ceny/kwoty/metraże
+  w całej aplikacji są teraz przycinane do sensownego zakresu (nie ujemne,
+  nie absurdalnie duże) i odporne na śmieciowe dane (wcześniej np. wpisanie
+  liter zamiast liczby w cenę powodowało błąd 500).
+- Wszystkie pola tekstowe (nazwa, firma, sklep, link, opis) mają teraz limit
+  długości dopasowany do kolumny w bazie - na SQLite brak limitu nie szkodził,
+  ale na PostgreSQL (produkcja) przekroczenie limitu VARCHAR rzuca twardy błąd.
+
+### Open redirect
+Dwa miejsca (`/login?next=...` i parametr `next` przy dodawaniu/usuwaniu
+inspiracji) pozwalały przekierować użytkownika po akcji na DOWOLNY zewnętrzny
+adres - potencjalne wykorzystanie do phishingu. Dodano `safe_next_redirect()`,
+które akceptuje tylko względne ścieżki lub adresy tej samej domeny.
+
+### Rate limiting (ochrona przed brute-force)
+Flask-Limiter: rejestracja (10/h), logowanie (15/h), zmiana hasła (10/h),
+domyślnie 200 żądań/h na resztę aplikacji per adres IP. Uwaga: limiter
+trzyma stan w pamięci procesu (storage_uri="memory://") - przy kilku
+workerach gunicorn na Renderze limity nie będą w pełni spójne między nimi;
+do prawdziwej produkcji z wieloma workerami warto podłączyć Redis.
+
+### Zabezpieczenia sesji i uploadu
+- Ciasteczko sesji: `HttpOnly`, `SameSite=Lax`, `Secure` (tylko HTTPS) gdy
+  `FLASK_DEBUG` nie jest ustawione na "1".
+- Limit rozmiaru żądania/uploadu: 10 MB (`MAX_CONTENT_LENGTH`).
+
+### Czego świadomie NIE zrobiono w tej turze (do rozważenia później)
+- Walidacja rzeczywistej zawartości/rozmiaru przesyłanych zdjęć (obecnie
+  tylko rozszerzenie pliku jest sprawdzane).
+- Weryfikacja e-maila przy rejestracji, reset hasła przez e-mail.
+- Redis dla Flask-Limiter (potrzebne dopiero przy wielu workerach/instancjach).
+- Automatyczne testy bezpieczeństwa jako część CI (obecnie przetestowane
+  ręcznie w tej sesji, nie ma stałego zestawu testów w repo).
+
+## Produkty na m² i wysokość ścian (ta tura)
+
+### Wymiary pokoi w metrażu
+- Trzeci kształt pokoju: "ze skosem (poddasze)" - obok prostokątnego i
+  nieregularnego. Ma boki A/B (jak prostokątny) + wysokość niska i wysokość
+  przy kalenicy zamiast jednej wysokości.
+- Powierzchnia ścian liczy się automatycznie (`Item.wall_area`):
+  - prostokątny: obwód (2×(bok A+bok B)) × wysokość
+  - ze skosem: obwód × uśredniona wysokość ((niska+wysoka)/2) - to
+    powszechnie stosowane przybliżenie, nie dokładna geometria stropu skośnego
+  - nieregularny: opcjonalnie można podać obwód ręcznie, wtedy też liczy się
+    ściany (obwód × wysokość)
+- Powierzchnia podłogi (`computed_area`) działa tak samo dla prostokątnego
+  i ze skosem (bok A × bok B).
+
+### Produkt na m²
+Nowa sekcja "produkt na m²" na górze wykończenia: podajesz nazwę, cenę za m²,
+czy liczyć od podłogi czy od ścian, i zaznaczasz checkboxami dowolną liczbę
+pokoi. System liczy dla KAŻDEGO zaznaczonego pokoju osobno (cena za m² ×
+jego własna powierzchnia) i tworzy tam gotową pozycję w "produktach" -
+przetestowane: ten sam produkt zastosowany do 2 różnych pokoi dał 2 różne,
+poprawnie wyliczone kwoty. Pokój bez podanych wymiarów w metrażu jest
+pomijany (nie da się policzyć). Wyliczenie jest migawką w momencie
+dodania - zmiana wymiarów pokoju później NIE przelicza wstecznie już
+dodanych pozycji (można je zawsze wyedytować ręcznie).
+
+### Widoczne podsumowania kwot
+- Góra każdej sekcji (w tym wykończenia): wyróżniony pasek "razem w tej sekcji".
+- Góra każdego pokoju: łączny pasek (wykonawcy+produkty razem) + osobne
+  podsumowania w sekcji "wykonawcy" i "produkty".
+- Kafelek pokoju na liście w sekcji wykończenie pokazuje teraz sumę
+  wykonawców I produktów razem (wcześniej tylko wykonawców).
+
+## Sekcja "Działka" i poprawki stan 0 (ta tura)
+
+### Nowa sekcja "Działka"
+- Dodana jako pierwszy segment (tylko dla typu "dom" - mieszkanie/remont jej
+  nie mają, bo tam nie kupuje się osobno gruntu).
+- Domyślna pozycja "koszt działki" - nowy, 4. szablon formularza: prosty
+  koszt (kwota + link + opis), bez pola wykonawcy. Kilka pozycji tego
+  szablonu w jednym itemie SUMUJE się (tak jak urząd), nie tworzy widełek -
+  bo dodatkowe koszty (podatek, badanie gruntu, biuro nieruchomości) to
+  osobne, jednoczesne wydatki, nie alternatywy.
+- Sekcja "dokumenty" na górze działki: nazwa + opis + plik (PDF lub zdjęcie),
+  edytowalne/usuwalne z podwójnym potwierdzeniem.
+
+### Stan 0
+- Przyłącza (woda/prąd/gaz/szambo) pogrupowane pod nagłówkiem "media" z
+  wizualną przerwą, potem architekt, urząd, geodeta, ogrodzenie, fundamenty.
+- Nowa domyślna pozycja "architekt" (szablon 2) - ma też własną sekcję
+  dokumentów (np. projekt architektoniczny), tak jak każda pozycja teraz.
+
+### Dokumenty (nowy, ogólny mechanizm)
+Nowy model Document - PDF lub zdjęcie, może być przypięty do konkretnej
+pozycji (np. architekt) ALBO do całej sekcji bez konkretnej pozycji (np.
+akt notarialny w działce). Sekcja "dokumenty" pojawia się teraz w widoku
+KAŻDEJ pozycji (nie tylko architekta), nie tylko w działce - to ogólna
+funkcja dostępna wszędzie.
+
+### "Nie wliczam w koszta" - uproszczone
+Po zaznaczeniu, cały formularz wyceny znika - zostaje tylko komunikat i
+przycisk "cofnij". Dokumenty przy tej pozycji nadal się pokazują (nie są
+związane z tym, czy coś liczy się do budżetu).
+
+### "Zlecam fachowcowi" - materiał opcjonalny
+Sekcja materiału jest teraz domyślnie ukryta w trybie "zlecam fachowcowi" -
+zamiast niej jest przycisk "+ dodaj materiał" (dla przypadków, gdy kupujesz
+materiał osobno, a fachowiec robi tylko robociznę). Checkbox "montaż
+wliczony w cenę materiału" został usunięty całkowicie - materiał i
+robocizna to teraz zawsze dwie osobne, jasne kwoty, bez dwuznaczności.
+
+## Współpraca nad projektem (ta tura)
+
+### Zaproszenia
+- Właściciel domu zaprasza inną osobę **po adresie e-mail** ze strony
+  "współpraca" (dostępnej z dashboardu). Osoba musi mieć już konto w apce.
+- Zaproszenie NIE daje dostępu samo z siebie - to tylko rekord oczekujący
+  (HouseInvite). Zaproszony widzi je dopiero po zalogowaniu, na liście
+  swoich projektów, z przyciskami "akceptuj"/"odrzuć".
+- Akceptacja tworzy pełnoprawny dostęp (HouseCollaborator) - współpracownik
+  widzi i edytuje WSZYSTKO w projekcie tak samo jak właściciel (pozycje,
+  wyceny, dokumenty, metraż itd.).
+- Tylko właściciel może zapraszać/anulować zaproszenia/usuwać dostęp -
+  współpracownik może sam siebie usunąć przyciskiem "opuść projekt".
+- Przetestowane end-to-end na dwóch kontach: brak dostępu przed
+  zaproszeniem (404), widoczność zaproszenia, pełny dostęp po akceptacji,
+  blokada zapraszania przez nie-właściciela (403), blokada dostępu po
+  opuszczeniu projektu.
+- Na liście "twoje projekty" projekty, w których jesteś współpracownikiem
+  (nie właścicielem), mają widoczną plakietkę "współpraca".
+
+### Model danych
+- `HouseCollaborator(house_id, user_id)` - aktywny dostęp.
+- `HouseInvite(house_id, invited_email, invited_by_id)` - oczekujące
+  zaproszenie, kasowane przy akceptacji (staje się HouseCollaborator) albo
+  odrzuceniu.
+- `get_owned_house()` - centralna funkcja autoryzacji używana przez
+  praktycznie każdą trasę - rozszerzona o sprawdzanie współpracowników,
+  więc dostęp propaguje się automatycznie do wszystkich pozycji, wariantów,
+  dokumentów itd. bez osobnych zmian w każdej trasie.
+
+## Poprawki responsywności (ta tura)
+- Wiersz wyboru pokoju przy "produkt na m²" (checkbox + nazwa + info o
+  metrażu) zawija się teraz poprawnie na wąskich ekranach zamiast
+  wychodzić poza kartę.
+- Wiersze współpracownika i zaproszenia (e-mail + przycisk) też się
+  zawijają - długi adres e-mail nie psuje już układu na telefonie.
+
+## Poprawka: sekcja "działka" dla istniejących projektów
+Nowa sekcja "działka" wcześniej trafiała tylko do NOWO tworzonych domów -
+projekty założone przed dodaniem tej funkcji jej nie miały. Dodano
+`ensure_dzialka_segment()`, wywoływane przy każdym wejściu na dashboard
+(i bezpośrednio na /segment/dzialka) - dogania brakującą sekcję automatycznie,
+bez potrzeby usuwania bazy czy zakładania projektu od nowa. Przetestowane:
+istniejący dom bez działki dostaje ją po prostu odwiedzeniu strony, bez
+duplikatów przy kolejnych wizytach.

@@ -21,6 +21,7 @@
   <div class="card color-green">
     <h3 style="margin:0 0 8px;">{{ icon('tool') }} wykonamy to sami</h3>
     <form method="post" action="{{ url_for('quote_diy', house_id=house.id, item_id=item.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <label>informacje dodatkowe</label>
       <textarea name="note" placeholder="np. materiały własne, robocizna weekendowa"></textarea>
       <label>szacowany koszt materiałów (zł)</label>
@@ -51,6 +52,7 @@
         {% if s.description %}<p style="margin:6px 0;color:var(--text-secondary);">{{ s.description }}</p>{% endif %}
         <div>{% for t in s.tag_list %}<span class="pill">{{ t }}</span>{% endfor %}</div>
         <form method="post" action="{{ url_for('quote_create', house_id=house.id, item_id=item.id, service_id=s.id) }}" style="margin-top:8px;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
           <input type="hidden" name="tag" value="{{ tag }}">
           <label>informacje dodatkowe</label>
           <textarea name="note" placeholder="np. parkiet dębowy, termin realizacji 2 tyg."></textarea>

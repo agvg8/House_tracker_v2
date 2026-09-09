@@ -12,6 +12,7 @@
     <div style="color:var(--text-secondary)">{{ s.price|int }} zł</div>
   </div>
   <form method="post" action="{{ url_for('item_variant_from_saved', house_id=house.id, item_id=item.id, saved_id=s.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button class="btn" type="submit">{{ icon('plus') }} dodaj</button>
   </form>
 </div>
@@ -20,6 +21,7 @@
 {% endif %}
 
 <form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
   {% if item.template == 1 %}
   <label>kto to wykona?</label>
@@ -36,35 +38,58 @@
     </label>
   </div>
 
-  <div class="box">
+  <div class="box" id="self-material-box">
     <h3>{{ icon('box') }} materiał</h3>
     <label>nazwa / typ materiału</label>
     <input type="text" name="material_name" placeholder="np. okno aluminiowe">
     <label>firma</label>
     <input type="text" name="material_company" placeholder="np. Drutex">
     <label>wycena materiału (zł)</label>
-    <input type="number" name="material_price" step="0.01">
+    <input type="number" name="material_price" step="0.01" min="0">
   </div>
 
   <div class="box" id="labor-box" style="display:none;">
     <h3>{{ icon('hammer') }} robocizna</h3>
     <label>wykonawca</label>
     <input type="text" name="labor_contractor" placeholder="np. Ekipa Budex">
-    <label class="checkbox-row"><input type="checkbox" name="labor_included"> montaż wliczony w cenę materiału</label>
     <label>wycena robocizny (zł)</label>
-    <input type="number" name="labor_price" step="0.01">
+    <input type="number" name="labor_price" step="0.01" min="0">
+
+    <div id="contractor-material-box" style="display:none;margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);">
+      <h3>{{ icon('box') }} materiał (opcjonalnie)</h3>
+      <label>nazwa / typ materiału</label>
+      <input type="text" name="material_name_c" placeholder="np. beton, stal zbrojeniowa">
+      <label>firma</label>
+      <input type="text" name="material_company_c" placeholder="np. dostawca fachowca">
+      <label>wycena materiału (zł)</label>
+      <input type="number" name="material_price_c" step="0.01" min="0">
+    </div>
+    <button type="button" class="btn" id="add-material-btn" style="margin-top:10px;">
+      {{ icon('plus') }} dodaj materiał (jeśli nie jest w cenie fachowca)
+    </button>
+    <p class="muted" style="margin:6px 0 0;font-size:12px;">fachowiec często ma już materiał w cenie - dodaj go tu tylko jeśli kupujesz go osobno</p>
   </div>
 
   <script>
     (function(){
-      var box = document.getElementById('labor-box');
+      var laborBox = document.getElementById('labor-box');
+      var selfMaterialBox = document.getElementById('self-material-box');
+      var contractorMaterialBox = document.getElementById('contractor-material-box');
+      var addMaterialBtn = document.getElementById('add-material-btn');
       var radios = document.querySelectorAll('input[name="labor_mode"]');
+
       function sync(){
         var contractor = document.querySelector('input[name="labor_mode"]:checked').value === 'contractor';
-        box.style.display = contractor ? 'block' : 'none';
+        laborBox.style.display = contractor ? 'block' : 'none';
+        selfMaterialBox.style.display = contractor ? 'none' : 'block';
       }
       radios.forEach(function(r){ r.addEventListener('change', sync); });
       sync();
+
+      addMaterialBtn.addEventListener('click', function(){
+        contractorMaterialBox.style.display = 'block';
+        addMaterialBtn.style.display = 'none';
+      });
     })();
   </script>
 
@@ -79,7 +104,7 @@
     <label>wykonawca / firma</label>
     <input type="text" name="labor_contractor" placeholder="np. Wodpol">
     <label>szacowana wycena (zł)</label>
-    <input type="number" name="material_price" step="0.01">
+    <input type="number" name="material_price" step="0.01" min="0">
     <label class="checkbox-row"><input type="checkbox" name="excluded"> nie wliczam w koszta (nie dotyczy mnie)</label>
   </div>
   <label>link (opcjonalnie)</label>
@@ -87,13 +112,24 @@
   <label>informacje</label>
   <textarea name="note" placeholder="np. termin realizacji, wymagane dokumenty"></textarea>
 
+  {% elif item.template == 4 %}
+  <div class="box">
+    <h3>{{ icon('moneybag') }} koszt</h3>
+    <label>kwota (zł)</label>
+    <input type="number" name="material_price" step="0.01" min="0" required>
+  </div>
+  <label>link (opcjonalnie)</label>
+  <input type="text" name="link">
+  <label>opis (opcjonalnie)</label>
+  <textarea name="note" placeholder="np. dodatkowe informacje o tym koszcie"></textarea>
+
   {% else %}
   <div class="box">
     <h3>{{ icon('building-bank') }} urząd</h3>
     <label>dokument</label>
     <input type="text" name="material_name" placeholder="np. pozwolenie na budowę">
     <label>opłata (zł)</label>
-    <input type="number" name="material_price" step="0.01">
+    <input type="number" name="material_price" step="0.01" min="0">
   </div>
   <label>link (opcjonalnie)</label>
   <input type="text" name="link">

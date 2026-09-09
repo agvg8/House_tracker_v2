@@ -16,6 +16,7 @@
 </div>
 
 <form method="post" action="{{ url_for('seed_example_services') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <button class="btn btn-block" type="submit">{{ icon('users') }} wypełnij przykładowymi usługami (do testów)</button>
 </form>
 
@@ -86,6 +87,7 @@
   <div class="group-modal-inner">
     <h2 style="margin-top:0;">dodaj usługę</h2>
     <form method="post" action="{{ url_for('saved_service_new') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <label>firma</label>
       <input type="text" name="company" required>
       <label>link</label>
@@ -112,6 +114,7 @@
   <div class="group-modal-inner">
     <h2 style="margin-top:0;">dodaj produkt</h2>
     <form method="post" action="{{ url_for('saved_product_new') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <label>nazwa</label>
       <input type="text" name="name" required>
       <label>sklep</label>
@@ -132,6 +135,7 @@
   <div class="group-modal-inner">
     <h2 style="margin-top:0;">dodaj inspirację</h2>
     <form method="post" action="{{ url_for('saved_inspiration_new') }}" enctype="multipart/form-data">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <label>nazwa</label>
       <input type="text" name="name" required>
       <label>zdjęcie</label>

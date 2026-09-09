@@ -3,6 +3,7 @@
 <h1>załóż konto</h1>
 {% if error %}<div class="card color-coral">{{ error }}</div>{% endif %}
 <form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <label>e-mail</label>
   <input type="text" name="email" required>
   <label>hasło</label>

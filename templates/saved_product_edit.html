@@ -3,6 +3,7 @@
 <a href="{{ url_for('robocze') }}" class="btn back-btn">{{ icon('arrow-left') }} wróć</a>
 <h1>edytuj produkt</h1>
 <form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <label>nazwa</label>
   <input type="text" name="name" value="{{ product.name or '' }}" required>
   <label>sklep</label>

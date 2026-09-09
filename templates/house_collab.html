@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="{{ url_for('dashboard', house_id=house.id) }}" class="btn back-btn">{{ icon('arrow-left') }} wróć</a>
+<h1>{{ icon('users', size=24) }} współpraca · {{ house.name }}</h1>
+
+{% if error %}<div class="card color-coral">{{ error }}</div>{% endif %}
+
+<h2>osoby z dostępem</h2>
+<div class="card color-purple">
+  <p style="margin:0;"><strong>{{ house.owner.email }}</strong> <span class="pill active">właściciel</span></p>
+</div>
+{% for c in collaborators %}
+<div class="card {{ loop.cycle('color-pink','color-teal','color-coral','color-amber','color-green') }}">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+    <span>{{ c.user.email }}</span>
+    {% if is_owner %}
+    <form method="post" action="{{ url_for('house_collab_remove', house_id=house.id, collab_id=c.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn" type="submit" style="color:var(--coral);border-color:var(--coral);">{{ icon('trash', size=14) }} usuń dostęp</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endfor %}
+
+{% if not is_owner %}
+<form method="post" action="{{ url_for('house_leave', house_id=house.id) }}" style="margin-top:14px;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <button class="btn btn-block" type="submit" style="color:var(--coral);border-color:var(--coral);">{{ icon('trash', size=14) }} opuść ten projekt</button>
+</form>
+{% endif %}
+
+{% if is_owner %}
+<h2>zaproszenia oczekujące</h2>
+{% for inv in invites %}
+<div class="card color-amber">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+    <span>{{ inv.invited_email }} <span class="pill">oczekuje</span></span>
+    <form method="post" action="{{ url_for('house_collab_cancel_invite', house_id=house.id, invite_id=inv.id) }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn" type="submit">{{ icon('x', size=14) }} anuluj</button>
+    </form>
+  </div>
+</div>
+{% else %}
+<div class="dashed">brak oczekujących zaproszeń</div>
+{% endfor %}
+
+<h2>zaproś kogoś</h2>
+<p class="muted">osoba musi mieć już konto w aplikacji - zaproszenie pojawi się u niej po zalogowaniu, na liście projektów</p>
+<form method="post" action="{{ url_for('house_collab_invite', house_id=house.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>e-mail osoby do zaproszenia</label>
+  <input type="text" name="email" placeholder="np. partner@przyklad.pl" required>
+  <button class="btn btn-primary btn-block" type="submit">{{ icon('plus') }} wyślij zaproszenie</button>
+</form>
+{% endif %}
+{% endblock %}

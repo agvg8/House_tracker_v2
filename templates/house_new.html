@@ -2,6 +2,7 @@
 {% block content %}
 <h1>nowy projekt</h1>
 <form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <label>co planujesz?</label>
   <div class="type-picker">
     {% for key, label, icon_name in project_types %}

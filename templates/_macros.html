@@ -15,6 +15,7 @@
     <a class="icon-btn" href="{{ url_for('variant_edit', house_id=house.id, variant_id=v.id) }}" title="edytuj">{{ icon('tool') }}</a>
     <a class="icon-btn" href="{{ url_for('variant_delete_confirm', house_id=house.id, variant_id=v.id) }}" title="usuń">{{ icon('trash') }}</a>
     <form method="post" action="{{ url_for('variant_toggle_include', house_id=house.id, variant_id=v.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="icon-btn {{ 'active' if v.include_in_budget else '' }}" type="submit" title="liczy się do budżetu">{{ icon('moneybag') }}</button>
     </form>
   </div>
@@ -52,6 +53,7 @@
       <p class="muted" style="margin-bottom:8px;">istniejące grupy w tej pozycji:</p>
       {% for g in existing_groups %}
       <form method="post" action="{{ url_for('variant_set_group', house_id=house.id, variant_id=v.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="group_name" value="{{ g }}">
         <button class="group-option {{ 'current' if v.group_name == g else '' }}" type="submit">{{ g }}</button>
       </form>
@@ -59,12 +61,14 @@
       {% endif %}
       {% if v.group_name %}
       <form method="post" action="{{ url_for('variant_set_group', house_id=house.id, variant_id=v.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="hidden" name="group_name" value="">
         <button class="group-option" type="submit">{{ icon('x') }} usuń z grupy</button>
       </form>
       {% endif %}
       <p class="muted" style="margin:12px 0 6px;">stwórz nową grupę:</p>
       <form method="post" action="{{ url_for('variant_set_group', house_id=house.id, variant_id=v.id) }}" style="display:flex;gap:8px;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <input type="text" name="group_name" placeholder="np. instalacja elektryczna DIY" style="flex:1;">
         <button class="btn btn-primary" type="submit">stwórz</button>
       </form>
@@ -98,10 +102,12 @@
     <a class="icon-btn" href="{{ url_for('material_edit', house_id=house.id, material_id=m.id) }}" title="edytuj">{{ icon('tool') }}</a>
     <a class="icon-btn" href="{{ url_for('material_delete_confirm', house_id=house.id, material_id=m.id) }}" title="usuń">{{ icon('trash') }}</a>
     <form method="post" action="{{ url_for('material_toggle_include', house_id=house.id, material_id=m.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="icon-btn {{ 'active' if m.include_in_budget else '' }}" type="submit" title="liczy się do budżetu">{{ icon('moneybag') }}</button>
     </form>
   </div>
   <p style="font-weight:600;margin:0 0 4px;">{{ m.name }}</p>
+  {% if m.price_per_m2 %}<span class="pill active">{{ icon('layout', size=13) }} {{ "%.2f"|format(m.price_per_m2) }} zł/m²</span>{% endif %}
   {% if m.shop %}<p style="margin:0 0 4px;color:var(--text-secondary);">sklep: {{ m.shop }}</p>{% endif %}
   {% if m.description %}<p style="margin:0 0 4px;color:var(--text-secondary);">{{ m.description }}</p>{% endif %}
   {% if m.link %}<p style="margin:0 0 6px;"><a href="{{ m.link }}" target="_blank">otwórz link →</a></p>{% endif %}
@@ -124,6 +130,7 @@
       <div style="color:var(--text-secondary)">{{ sp.price|int }} zł</div>
     </div>
     <form method="post" action="{{ url_for('material_from_saved', house_id=house.id, item_id=item.id, pid=sp.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="btn" type="submit">{{ icon('plus') }} dodaj</button>
     </form>
   </div>
@@ -132,6 +139,7 @@
   {% endif %}
 
   <form method="post" action="{{ url_for('material_new', house_id=house.id, item_id=item.id) }}" style="margin-top:10px;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>nazwa</label>
     <input type="text" name="name" required>
     <label>sklep</label>
@@ -152,12 +160,14 @@
 {% for t in item.tasks %}
 <div class="segment-row" style="padding-right:0.6rem;">
   <form method="post" action="{{ url_for('task_toggle', house_id=house.id, task_id=t.id) }}" style="flex:1;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label style="display:flex;align-items:center;gap:10px;cursor:pointer;margin:0;width:auto;">
       <input type="checkbox" onchange="this.form.submit()" {% if t.done %}checked{% endif %} style="width:auto;">
       <span style="{{ 'text-decoration:line-through;color:var(--text-muted);' if t.done else '' }}">{{ t.text }}</span>
     </label>
   </form>
   <form method="post" action="{{ url_for('task_delete', house_id=house.id, task_id=t.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button class="icon-btn" type="submit" title="usuń">{{ icon('trash') }}</button>
   </form>
 </div>
@@ -166,6 +176,7 @@
 {% endfor %}
 
 <form method="post" action="{{ url_for('task_new', house_id=house.id, item_id=item.id) }}" style="display:flex;gap:8px;margin-top:10px;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <input type="text" name="text" placeholder="np. wybrać kolor płytek" style="flex:1;" required>
   <button class="btn btn-primary" type="submit">{{ icon('plus') }} dodaj</button>
 </form>

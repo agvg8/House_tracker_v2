@@ -5,6 +5,8 @@
   <p style="margin:0;">Zamierzasz usunąć: <strong>{{ target_name }}</strong>. Tej operacji nie da się cofnąć.</p>
 </div>
 <form method="post" action="{{ action_url }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
   <button class="btn btn-block" style="background:var(--coral);color:var(--page);font-weight:600;border:none;" type="submit">
     {{ icon('trash') }} tak, usuń na stałe
   </button>

@@ -6,6 +6,7 @@
 <img src="{{ url_for('static', filename='uploads/' + inspiration.photo_filename) }}" style="width:100%;border-radius:12px;margin-bottom:1rem;">
 {% endif %}
 <form method="post" enctype="multipart/form-data">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <label>nazwa</label>
   <input type="text" name="name" value="{{ inspiration.name or '' }}" required>
   <label>nowe zdjęcie (opcjonalnie, zastąpi obecne)</label>

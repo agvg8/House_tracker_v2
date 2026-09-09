@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<a href="{{ url_for('item_detail', house_id=house.id, item_id=item.id) }}" class="btn back-btn">{{ icon('arrow-left') }} wróć</a>
+<h1>edytuj wycenę</h1>
+<div class="card color-purple">
+  <p style="margin:0;"><strong>{{ quote.service.company if quote.service else 'sam(a) wykonuję' }}</strong> · {{ quote.tag }}</p>
+</div>
+<form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <label>informacje dodatkowe</label>
+  <textarea name="note">{{ quote.note or '' }}</textarea>
+  <label>kwota (zł)</label>
+  <input type="number" name="price" step="0.01" min="0" value="{{ quote.price or 0 }}" required>
+  <button class="btn btn-primary btn-block" type="submit">zapisz zmiany</button>
+</form>
+{% endblock %}

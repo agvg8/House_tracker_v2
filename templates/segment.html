@@ -2,7 +2,45 @@
 {% block content %}
 <a href="{{ url_for('dashboard', house_id=house.id) }}" class="btn back-btn">{{ icon('arrow-left') }} wróć</a>
 <h1>{{ segment.name }}</h1>
-<p class="muted">{% if hi > 0 %}{{ lo|int }} – {{ hi|int }} zł{% else %}brak jeszcze wyceny{% endif %} · {{ items|length }} pozycji</p>
+<div class="total-badge">
+  <span>{{ icon('moneybag', size=16) }} razem w tej sekcji</span>
+  <span>{% if hi > 0 %}{{ lo|int }} – {{ hi|int }} zł{% else %}0 zł{% endif %}</span>
+</div>
+<p class="muted">{{ items|length }} pozycji</p>
+
+{% if segment.key == "dzialka" %}
+<h2>{{ icon('file-text', size=18) }} dokumenty</h2>
+{% for d in segment_documents %}
+<div class="card {{ loop.cycle('color-pink','color-purple','color-teal','color-coral','color-amber','color-green') }}">
+  <div class="icon-actions">
+    <a class="icon-btn" href="{{ url_for('document_delete_confirm', house_id=house.id, doc_id=d.id) }}" title="usuń">{{ icon('trash') }}</a>
+  </div>
+  <strong>{{ d.name }}</strong>
+  {% if d.description %}<p style="margin:4px 0 0;color:var(--text-secondary);">{{ d.description }}</p>{% endif %}
+  {% if d.filename %}
+  <a href="{{ url_for('static', filename='uploads/' + d.filename) }}" target="_blank" class="tile-btn" style="margin-top:6px;">
+    {{ icon('file-text', size=13) }} {% if d.file_type == 'pdf' %}otwórz PDF{% else %}zobacz zdjęcie{% endif %}
+  </a>
+  {% endif %}
+</div>
+{% else %}
+<div class="dashed">brak jeszcze dokumentów</div>
+{% endfor %}
+
+<details class="card">
+  <summary style="cursor:pointer;font-weight:600;font-size:14px;">+ dodaj dokument</summary>
+  <form method="post" action="{{ url_for('document_new', house_id=house.id, segment_key='dzialka') }}" style="margin-top:10px;" enctype="multipart/form-data">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>nazwa dokumentu</label>
+    <input type="text" name="name" placeholder="np. akt notarialny" required>
+    <label>opis (opcjonalnie)</label>
+    <textarea name="description"></textarea>
+    <label>plik (PDF lub zdjęcie)</label>
+    <input type="file" name="file" accept="application/pdf,image/*">
+    <button class="btn btn-primary btn-block" type="submit">dodaj dokument</button>
+  </form>
+</details>
+{% endif %}
 
 {% if segment.key == "wykonczenie" %}
 <h2>usługi</h2>
@@ -45,6 +83,7 @@
       <div style="color:var(--text-muted);font-size:12px;">{{ sv.tag_list|join(', ') }}</div>
     </div>
     <form method="post" action="{{ url_for('service_from_saved', house_id=house.id, sid=sv.id) }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button class="btn" type="submit">{{ icon('plus') }} dodaj</button>
     </form>
   </div>
@@ -53,6 +92,7 @@
   {% endif %}
 
   <form method="post" action="{{ url_for('service_new', house_id=house.id) }}" style="margin-top:10px;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>firma</label>
     <input type="text" name="company" placeholder="np. Malujemy Sp. z o.o." required>
     <label>link</label>
@@ -73,10 +113,68 @@
   </form>
 </details>
 
+<h2>produkt na m²</h2>
+<p class="muted">dodaj produkt z ceną za metr kwadratowy - kwota policzy się automatycznie dla każdego zaznaczonego pokoju (osobno wg jego powierzchni)</p>
+<details class="card">
+  <summary style="cursor:pointer;font-weight:600;font-size:14px;">+ dodaj produkt na m²</summary>
+  <form method="post" action="{{ url_for('product_m2_apply', house_id=house.id) }}" style="margin-top:10px;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <label>nazwa produktu</label>
+    <input type="text" name="name" placeholder="np. panele podłogowe, farba" required>
+    <label>sklep / firma (opcjonalnie)</label>
+    <input type="text" name="shop">
+    <label>cena za m² (zł)</label>
+    <input type="number" name="price_per_m2" step="0.01" min="0" required>
+
+    <label style="margin-top:10px;">jaka powierzchnia?</label>
+    <div class="type-picker">
+      <label class="type-card">
+        <input type="radio" name="surface_type" value="floor" checked>
+        {{ icon('layout') }}
+        <span>podłoga</span>
+      </label>
+      <label class="type-card">
+        <input type="radio" name="surface_type" value="wall">
+        {{ icon('box') }}
+        <span>ściany</span>
+      </label>
+    </div>
+
+    <label style="margin-top:10px;">wybierz pokoje</label>
+    {% set room_items = items|selectattr('is_room')|list %}
+    {% for r in room_items %}
+    <label style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14px;width:auto;margin:6px 0;padding:8px 10px;border:0.5px solid var(--border);border-radius:8px;flex-wrap:wrap;">
+      <span style="display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" name="room_ids" value="{{ r.id }}" style="width:auto;flex-shrink:0;">
+        {{ r.name }}
+      </span>
+      <span style="color:var(--text-secondary);font-size:12px;white-space:normal;">
+        {% if r.computed_area %}{{ "%.1f"|format(r.computed_area) }} m² podłoga{% endif %}
+        {% if r.wall_area %} · {{ "%.1f"|format(r.wall_area) }} m² ściany{% endif %}
+        {% if not r.computed_area and not r.wall_area %}brak wymiarów{% endif %}
+      </span>
+    </label>
+    {% else %}
+    <div class="dashed">brak jeszcze pokoi - dodaj je w metrażu</div>
+    {% endfor %}
+    <p class="muted" style="margin:4px 0 0;font-size:12px;">brak podanych wymiarów pokoju (metraż/ściany) w metrażu = pokój zostanie pominięty</p>
+
+    <button class="btn btn-primary btn-block" type="submit" style="margin-top:14px;">{{ icon('plus') }} policz i dodaj do zaznaczonych pokoi</button>
+  </form>
+</details>
+
 <h2>pokoje</h2>
 {% endif %}
 
 {% for it in items %}
+{% if segment.key == "stan0" %}
+  {% set is_media = "przyłącze" in it.name|lower %}
+  {% set prev_is_media = loop.previtem and "przyłącze" in loop.previtem.name|lower %}
+  {% set next_is_media = loop.nextitem and "przyłącze" in loop.nextitem.name|lower %}
+  {% if is_media and not prev_is_media %}
+  <h3 style="margin:16px 0 8px;font-size:13px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.06em;font-weight:700;">{{ icon('plug', size=14) }} media</h3>
+  {% endif %}
+{% endif %}
 {% if it.is_room %}
 <div class="segment-row {{ loop.cycle('color-pink','color-purple','color-teal','color-coral','color-amber','color-green') }}" style="padding-right:0.6rem;">
   <a href="{{ url_for('item_detail', house_id=house.id, item_id=it.id) }}" style="display:flex;align-items:center;justify-content:space-between;flex:1;text-decoration:none;color:inherit;">
@@ -109,11 +207,15 @@
   <a href="{{ url_for('item_delete_confirm', house_id=house.id, item_id=it.id) }}" style="color:var(--coral);margin-left:10px;" title="usuń pozycję">{{ icon('trash') }}</a>
 </div>
 {% endif %}
+{% if segment.key == "stan0" and is_media and not next_is_media %}
+<div style="height:1px;background:var(--border);margin:6px 0 16px;"></div>
+{% endif %}
 {% endfor %}
 
 <details class="card">
   <summary style="cursor:pointer;font-weight:600;font-size:14px;">+ dodaj więcej</summary>
   <form method="post" action="{{ url_for('item_new', house_id=house.id, segment_key=segment.key) }}" style="margin-top:10px;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>nazwa pozycji</label>
     <input type="text" name="name" required>
     <label>typ formularza</label>
@@ -121,6 +223,7 @@
       <option value="1">materiał + wykonawca</option>
       <option value="2">szacowana wycena + wykonawca + informacje</option>
       <option value="3">urząd: dokument + opłata + informacje</option>
+      <option value="4">prosty koszt: kwota + link + opis</option>
     </select>
     <button class="btn btn-primary btn-block" type="submit">dalej</button>
   </form>

@@ -4,6 +4,7 @@
 <h1>edytuj · {{ item.name }}</h1>
 
 <form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   {% if item.template == 1 %}
   {% set is_self = variant.labor_contractor == 'robię sam(a)' %}
   <label>kto to wykona?</label>
@@ -20,32 +21,43 @@
     </label>
   </div>
 
-  <div class="box color-purple">
+  <div class="box color-purple" id="self-material-box" style="{{ 'display:none;' if not is_self and variant.labor_contractor else '' }}">
     <h3>{{ icon('box') }} materiał</h3>
     <label>nazwa / typ materiału</label>
-    <input type="text" name="material_name" value="{{ variant.material_name or '' }}">
+    <input type="text" name="material_name" value="{{ variant.material_name or '' if is_self or not variant.labor_contractor else '' }}">
     <label>firma</label>
-    <input type="text" name="material_company" value="{{ variant.material_company or '' }}">
+    <input type="text" name="material_company" value="{{ variant.material_company or '' if is_self or not variant.labor_contractor else '' }}">
     <label>wycena materiału (zł)</label>
-    <input type="number" name="material_price" step="0.01" value="{{ variant.material_price or 0 }}">
+    <input type="number" name="material_price" step="0.01" min="0" value="{{ (variant.material_price or 0) if is_self or not variant.labor_contractor else 0 }}">
   </div>
 
   <div class="box color-teal" id="labor-box" style="{{ 'display:none;' if is_self else '' }}">
     <h3>{{ icon('hammer') }} robocizna</h3>
     <label>wykonawca</label>
     <input type="text" name="labor_contractor" value="{{ '' if is_self else (variant.labor_contractor or '') }}">
-    <label class="checkbox-row"><input type="checkbox" name="labor_included" {% if variant.labor_included and not is_self %}checked{% endif %}> montaż wliczony w cenę materiału</label>
     <label>wycena robocizny (zł)</label>
-    <input type="number" name="labor_price" step="0.01" value="{{ variant.labor_price or 0 }}">
+    <input type="number" name="labor_price" step="0.01" min="0" value="{{ variant.labor_price or 0 }}">
+
+    <div id="contractor-material-box" style="{{ 'display:none;' if is_self else 'display:block;' }}margin-top:12px;padding-top:12px;border-top:0.5px solid var(--border);">
+      <h3>{{ icon('box') }} materiał (opcjonalnie)</h3>
+      <label>nazwa / typ materiału</label>
+      <input type="text" name="material_name_c" value="{{ '' if is_self or not variant.labor_contractor else (variant.material_name or '') }}">
+      <label>firma</label>
+      <input type="text" name="material_company_c" value="{{ '' if is_self or not variant.labor_contractor else (variant.material_company or '') }}">
+      <label>wycena materiału (zł)</label>
+      <input type="number" name="material_price_c" step="0.01" min="0" value="{{ 0 if is_self or not variant.labor_contractor else (variant.material_price or 0) }}">
+    </div>
   </div>
 
   <script>
     (function(){
-      var box = document.getElementById('labor-box');
+      var laborBox = document.getElementById('labor-box');
+      var selfMaterialBox = document.getElementById('self-material-box');
       var radios = document.querySelectorAll('input[name="labor_mode"]');
       function sync(){
         var contractor = document.querySelector('input[name="labor_mode"]:checked').value === 'contractor';
-        box.style.display = contractor ? 'block' : 'none';
+        laborBox.style.display = contractor ? 'block' : 'none';
+        selfMaterialBox.style.display = contractor ? 'none' : 'block';
       }
       radios.forEach(function(r){ r.addEventListener('change', sync); });
       sync();
@@ -58,7 +70,14 @@
     <label>wykonawca / firma</label>
     <input type="text" name="labor_contractor" value="{{ variant.labor_contractor or '' }}">
     <label>szacowana wycena (zł)</label>
-    <input type="number" name="material_price" step="0.01" value="{{ variant.material_price or 0 }}">
+    <input type="number" name="material_price" step="0.01" min="0" value="{{ variant.material_price or 0 }}">
+  </div>
+
+  {% elif item.template == 4 %}
+  <div class="box color-green">
+    <h3>{{ icon('moneybag') }} koszt</h3>
+    <label>kwota (zł)</label>
+    <input type="number" name="material_price" step="0.01" min="0" value="{{ variant.material_price or 0 }}">
   </div>
 
   {% else %}
@@ -67,7 +86,7 @@
     <label>dokument</label>
     <input type="text" name="material_name" value="{{ variant.material_name or '' }}">
     <label>opłata (zł)</label>
-    <input type="number" name="material_price" step="0.01" value="{{ variant.material_price or 0 }}">
+    <input type="number" name="material_price" step="0.01" min="0" value="{{ variant.material_price or 0 }}">
   </div>
   {% endif %}
 

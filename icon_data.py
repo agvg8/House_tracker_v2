@@ -42,5 +42,7 @@ ICON_PATHS = {
   "x": "<path d=\"M18 6l-12 12\" /> <path d=\"M6 6l12 12\" />",
   "container": "<path d=\"M20 4v.01\" /> <path d=\"M20 20v.01\" /> <path d=\"M20 16v.01\" /> <path d=\"M20 12v.01\" /> <path d=\"M20 8v.01\" /> <path d=\"M8 5a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-6a1 1 0 0 1 -1 -1l0 -14\" /> <path d=\"M4 4v.01\" /> <path d=\"M4 20v.01\" /> <path d=\"M4 16v.01\" /> <path d=\"M4 12v.01\" /> <path d=\"M4 8v.01\" />",
   "tank": "<path d=\"M2 15a3 3 0 0 1 3 -3h12a3 3 0 0 1 3 3a3 3 0 0 1 -3 3h-12a3 3 0 0 1 -3 -3\" /> <path d=\"M6 12l1 -5h5l3 5\" /> <path d=\"M21 9l-7.8 0\" />",
-  "menu-2": "<path d=\"M4 6l16 0\" /> <path d=\"M4 12l16 0\" /> <path d=\"M4 18l16 0\" />"
+  "menu-2": "<path d=\"M4 6l16 0\" /> <path d=\"M4 12l16 0\" /> <path d=\"M4 18l16 0\" />",
+  "map": "<path d=\"M3 7l6 -3l6 3l6 -3v13l-6 3l-6 -3l-6 3v-13\" /> <path d=\"M9 4v13\" /> <path d=\"M15 7v13\" />",
+  "file-text": "<path d=\"M14 3v4a1 1 0 0 0 1 1h4\" /> <path d=\"M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2\" /> <path d=\"M9 9l1 0\" /> <path d=\"M9 13l6 0\" /> <path d=\"M9 17l6 0\" />"
 }

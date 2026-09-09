@@ -3,6 +3,7 @@
 <a href="{{ url_for('item_detail', house_id=house.id, item_id=item.id) }}" class="btn back-btn"><i class="ti ti-arrow-left"></i> wróć</a>
 <h1>edytuj materiał</h1>
 <form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
   <label>nazwa</label>
   <input type="text" name="name" value="{{ material.name or '' }}" required>
   <label>sklep</label>

@@ -9,6 +9,7 @@
 <div class="card color-purple">
   <h2 style="margin-top:0;">zmień e-mail</h2>
   <form method="post" action="{{ url_for('account_change_email') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>nowy e-mail</label>
     <input type="text" name="email" required>
     <button class="btn btn-primary btn-block" type="submit">zmień e-mail</button>
@@ -18,6 +19,7 @@
 <div class="card color-teal">
   <h2 style="margin-top:0;">zmień hasło</h2>
   <form method="post" action="{{ url_for('account_change_password') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <label>aktualne hasło</label>
     <input type="password" name="old_password" required>
     <label>nowe hasło</label>
