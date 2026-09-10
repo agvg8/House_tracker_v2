@@ -760,7 +760,6 @@ def house_new():
 @login_required
 def dashboard(house_id):
     house = get_owned_house(house_id)
-    ensure_dzialka_segment(house)
     lo_total, hi_total, breakdown = house_totals(house_id)
 
     circumference = 2 * 3.14159265 * 78
@@ -790,19 +789,6 @@ def dashboard(house_id):
 
 
 ROOM_TAGS = ["gabinet", "sypialnia", "pokój dziecięcy"]
-
-
-def ensure_dzialka_segment(house):
-    """Dogania istniejace domy (utworzone zanim dodalismy sekcje 'dzialka') - dodaje ja
-    automatycznie, jesli jej brakuje, zamiast wymagac ponownego tworzenia projektu."""
-    if "dom" not in house.type_list:
-        return
-    if Segment.query.filter_by(house_id=house.id, key="dzialka").first():
-        return
-    min_order = db.session.query(db.func.min(Segment.order)).filter_by(house_id=house.id).scalar() or 0
-    db.session.add(Segment(house_id=house.id, key="dzialka", name="działka", icon="map", order=min_order - 1))
-    db.session.add(Item(house_id=house.id, segment_key="dzialka", name="koszt działki", template=4))
-    db.session.commit()
 
 
 def sync_house_from_rooms(house_id):
@@ -963,8 +949,6 @@ def segment_new(house_id):
 @login_required
 def segment_view(house_id, segment_key):
     house = get_owned_house(house_id)
-    if segment_key == "dzialka":
-        ensure_dzialka_segment(house)
     seg = Segment.query.filter_by(house_id=house_id, key=segment_key).first_or_404()
     items = Item.query.filter_by(house_id=house_id, segment_key=segment_key).all()
     lo, hi = segment_range(house_id, segment_key)

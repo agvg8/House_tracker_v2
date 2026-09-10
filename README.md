@@ -317,12 +317,3 @@ robocizna to teraz zawsze dwie osobne, jasne kwoty, bez dwuznaczności.
   wychodzić poza kartę.
 - Wiersze współpracownika i zaproszenia (e-mail + przycisk) też się
   zawijają - długi adres e-mail nie psuje już układu na telefonie.
-
-## Poprawka: sekcja "działka" dla istniejących projektów
-Nowa sekcja "działka" wcześniej trafiała tylko do NOWO tworzonych domów -
-projekty założone przed dodaniem tej funkcji jej nie miały. Dodano
-`ensure_dzialka_segment()`, wywoływane przy każdym wejściu na dashboard
-(i bezpośrednio na /segment/dzialka) - dogania brakującą sekcję automatycznie,
-bez potrzeby usuwania bazy czy zakładania projektu od nowa. Przetestowane:
-istniejący dom bez działki dostaje ją po prostu odwiedzeniu strony, bez
-duplikatów przy kolejnych wizytach.
